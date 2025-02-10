@@ -4,6 +4,10 @@ DB operations module
         - validate zero-sum (separate function for reuse)
         - DB TRIGGER rules for auto postings (see hledger docs)
     - R: by id, search by desc (multiple)
-    - U: separate funcs per field, chosen by caller
-        - or id and "new Transaction object" with validation check
+        - transaction by id
+        - all postings by transaction id
+        - transactions between dates
+        - transactions by associated account
+        - transactions by associated account with only relevant postings
+    - U: Option parameters, with unmodified entries being None
     - D: by id

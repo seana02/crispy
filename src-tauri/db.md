@@ -15,7 +15,7 @@
 |Column|Type|Description|
 |--|:-:|--|
 |id|INTEGER PRIMARY KEY|see sqlite datatypes documentation, autoincrementing rowid alias|
-|transaction_date|TEXT|see sqlite datetime functions documentation, storing using text|
+|transaction_date|TEXT NOT NULL DEFAULT '1970-1-1'|see sqlite datetime functions documentation, storing using text|
 |description|TEXT|name/description of transaction|
 
 ### postings Table

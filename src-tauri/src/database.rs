@@ -30,7 +30,7 @@ fn create_db_file(file: &PathBuf) -> Result<(), rusqlite::Error> {
     conn.execute_batch(
         "CREATE TABLE IF NOT EXISTS transactions (
             id                          INTEGER PRIMARY KEY,
-            transaction_date            TEXT,
+            transaction_date            TEXT NOT NULL DEFAULT '1970-1-1',
             description                 TEXT
         );
         CREATE TABLE IF NOT EXISTS postings (

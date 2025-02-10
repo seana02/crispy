@@ -8,6 +8,7 @@ use tauri::utils::acl::ParseIdentifierError;
 use time::Date;
 
 pub struct Posting {
+    pub id: i64,
     pub account: String,
     pub value: i64,
     pub currency: String,
@@ -15,6 +16,7 @@ pub struct Posting {
 }
 
 pub struct Transaction {
+    pub id: i64,
     pub transaction_date: Date,
     pub description: String,
     pub postings: Vec<Posting>,
@@ -32,6 +34,7 @@ impl Transaction {
 }
 
 pub struct Subscription {
+    pub id: i64,
     pub description: String,
     pub last_update_date: Date,
     pub frequency: SubscriptionFrequency,
