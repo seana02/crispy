@@ -1,0 +1,77 @@
+@import url('./colors.css');
+
+#transaction,
+#transaction-edit {
+  height: 98vh;
+  color: var(--foreground);
+  display: flex;
+  flex-direction: column;
+}
+
+#transaction-edit {
+  font-size: 1.2rem;
+}
+
+#transaction-edit-form {
+  overflow: scroll;
+  display: flex;
+  flex-direction: column;
+}
+
+#form-postings-list {
+  flex: 1;
+  overflow-y: scroll;
+}
+
+#transaction-edit-form .form-row {
+  display: flex;
+  gap: 16px;
+  padding-right: 16px;
+}
+
+#transaction-edit-form .form-element {
+  margin: 12px 0;
+  display: flex;
+  align-items: center;
+}
+
+#transaction-edit-form .form-element label {
+  margin-right: 8px;
+}
+
+#transaction-edit-form .form-delete {
+  width: 40px;
+  height: 40px;
+  background-color: var(--red);
+  border-radius: 4px;
+  font-size: 2rem;
+  position: relative;
+}
+
+#transaction-edit-form .form-delete div {
+  position: absolute;
+  top: 12px;
+  left: 9px;
+}
+
+#form-button-row {
+  justify-content: space-between;
+}
+
+.form-delete:hover {
+  cursor: pointer;
+}
+
+.form-row .flex1 { flex: 1; }
+
+.form-row .flex2 { flex: 2; }
+
+.form-row .flex3 { flex: 3; }
+
+.form-row .flex4 { flex: 4; }
+
+.form-row .flex1 input,
+.form-row .flex2 input,
+.form-row .flex3 input,
+.form-row .flex4 input { flex: 1; }
+
