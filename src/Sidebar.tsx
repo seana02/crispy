@@ -2,7 +2,7 @@ import './styles/Sidebar.css';
 
 interface SidebarProps {
     activeTab: string;
-    updateTab: (newTab: string) => void;
+    updateTab: ([newTab, _]: [string, any]) => void;
 }
 
 interface TabProps {
@@ -24,9 +24,21 @@ export default function Sidebar(props: SidebarProps) {
     ];
     return (
         <div className="sidebar">
-            {tabs.map((t,i) => <Tab text={t} key={i} status={props.activeTab === t ? TabStatus.Active : TabStatus.Inactive} onClick={() => props.updateTab(t)} />)}
+            {tabs.map((t,i) => <Tab text={t} key={i} status={getHighlightedTab(props.activeTab) === t ? TabStatus.Active : TabStatus.Inactive} onClick={() => props.updateTab([t, null])} />)}
         </div>
     );
+
+    function getHighlightedTab(activeTab: string) {
+        switch(activeTab) {
+            case "Overview":
+                return "Overview";
+            case "Transactions":
+            case "TransactionEdit":
+                return "Transactions";
+            default: return "";
+        }
+    }
+
 }
 
 function Tab(props: TabProps) {

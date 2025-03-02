@@ -9,7 +9,7 @@
 #### Metadata Keys
 |Key|Description|
 |--|--|
-|Version|database structure version|
+|version|database structure version|
 
 ### transactions Table
 |Column|Type|Description|
@@ -24,7 +24,7 @@
 |id|INTEGER PRIMARY KEY|id of postings|
 |transaction_id|INTEGER|foreign key constraint referencing transactions.id|
 |account|TEXT NOT NULL|affected account name|
-|value|INTEGER NOT NULL|amount change, multiplied by 10^8 for fixed-point subunit representation (8 digits after the decimal point)|
+|value|TEXT NOT NULL|amount of currency, exact amount in text|
 |currency|TEXT NOT NULL DEFAULT 'USD'|unit of currency|
 |comment|TEXT|space for additional comment|
 

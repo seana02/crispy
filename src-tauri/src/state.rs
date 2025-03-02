@@ -1,5 +1,6 @@
 use rusqlite::Connection;
+use std::sync::Mutex;
 
 pub struct AppState {
-    pub db: std::sync::Mutex<Option<Connection>>,
+    pub db: Mutex<Option<Connection>>,
 }

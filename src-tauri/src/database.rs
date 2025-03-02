@@ -1,5 +1,5 @@
-mod subscriptions;
-mod transactions;
+pub mod subscriptions;
+pub mod transactions;
 
 use std::{
     fs::{self, File},
@@ -8,7 +8,7 @@ use std::{
 
 use rusqlite::Connection;
 
-fn get_db_file() -> PathBuf {
+pub fn get_db_file() -> PathBuf {
     dirs::data_dir()
         .expect("Could not resolve data directory")
         .join("crispy/data.db")
@@ -28,7 +28,12 @@ fn create_db_file(file: &PathBuf) -> Result<(), rusqlite::Error> {
     let conn = Connection::open(file)?;
 
     conn.execute_batch(
-        "CREATE TABLE IF NOT EXISTS transactions (
+        "CREATE TABLE IF NOT EXISTS crispy (
+            key                         TEXT,
+            value                       TEXT
+        );
+        INSERT INTO crispy VALUES ('version', '0.1');
+        CREATE TABLE IF NOT EXISTS transactions (
             id                          INTEGER PRIMARY KEY,
             transaction_date            TEXT NOT NULL DEFAULT '1970-1-1',
             description                 TEXT
@@ -37,7 +42,7 @@ fn create_db_file(file: &PathBuf) -> Result<(), rusqlite::Error> {
             id                          INTEGER PRIMARY KEY,
             transaction_id              INTEGER,
             account                     TEXT NOT NULL,
-            value                       INTEGER NOT NULL,
+            value                       TEXT NOT NULL,
             currency                    TEXT NOT NULL DEFAULT 'USD',
             comment                     TEXT,
             FOREIGN KEY(transaction_id) REFERENCES transactions(id) ON DELETE CASCADE

@@ -23,14 +23,76 @@
   overflow-y: scroll;
 }
 
-#transaction-edit-form .form-row {
+#transaction-edit-form .form-row,
+.transaction-list-row,
+.posting-list-row,
+.transaction-list-header {
   display: flex;
-  gap: 16px;
-  padding-right: 16px;
+  gap: 1rem;
+  padding-right: 1rem;
+}
+
+.transaction-list-row,
+.transaction-list-header {
+  font-size: 1.2rem;
+  border-radius: 16px;
+  padding: 0.5rem;
+  margin: 1.0rem 0.5rem 0;
+  cursor: pointer;
+  background-color: var(--brightblue);
+  border: 2px solid transparent;
+  transition: border-color 0.25s;
+  transition: border-radius 0.3s;
+}
+
+.transaction-list-header {
+  background-color: var(--background);
+  margin: 0 0.5rem;
+}
+
+.transaction-list-row:hover {
+  border-color: var(--red);
+}
+
+.Collapsible__contentInner {
+  background-color: var(--brightblue);
+  border-radius: 0 0 16px 16px;
+  transition: border-radius 0.3s;
+  padding: 0.8rem;
+  margin: 0 0.5rem;
+  border-top: 2px solid var(--blue);
+}
+
+.Collapsible__trigger.is-open .transaction-list-row {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.transaction-list-cell {
+  height: 1.8rem;
+  line-height: 2.1rem;
+}
+
+.transaction-list-id {
+  width: 4.5rem;
+  text-align: right;
+}
+
+.transaction-list-date {
+  width: 6.2rem;
+}
+
+.transaction-list-desc {
+  flex: 1;
+}
+
+.transaction-list-button {
+  align-self: flex-end;
+  line-height: 0.8rem;
 }
 
 #transaction-edit-form .form-element {
-  margin: 12px 0;
+  margin: 0.8rem 0;
   display: flex;
   align-items: center;
 }
@@ -54,8 +116,14 @@
   left: 9px;
 }
 
-#form-button-row {
+#form-button-row,
+#transaction-button-row {
+  display: flex;
   justify-content: space-between;
+}
+
+#transaction-button-row {
+  margin-bottom: 0.6rem;
 }
 
 .form-delete:hover {

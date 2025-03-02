@@ -4,32 +4,76 @@ use rusqlite::{
     types::{FromSql, FromSqlError, FromSqlResult, ToSqlOutput, ValueRef},
     ToSql,
 };
+use rust_decimal::Decimal;
+use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use tauri::utils::acl::ParseIdentifierError;
 use time::Date;
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Posting {
-    pub id: i64,
+    pub id: Option<i64>,
     pub account: String,
-    pub value: i64,
+    pub value: Decimal,
     pub currency: String,
     pub comment: String,
 }
 
+impl Posting {
+    pub fn new(
+        id: Option<i64>,
+        account: String,
+        value: String,
+        currency: String,
+        comment: String,
+    ) -> Self {
+        Posting {
+            id,
+            account,
+            value: Decimal::from_str_exact(&value).unwrap(),
+            currency,
+            comment,
+        }
+    }
+}
+
+#[derive(Deserialize, Debug)]
 pub struct Transaction {
-    pub id: i64,
+    pub id: Option<i64>,
     pub transaction_date: Date,
     pub description: String,
     pub postings: Vec<Posting>,
 }
 
 impl Transaction {
-    pub fn check(&self) -> bool {
-        // Has the potential to overflow, but unlikely
-        self.postings.iter().fold(0, |x, p| x + p.value) == 0_i64
-    }
-
     pub fn add_posting(&mut self, p: Posting) {
         self.postings.push(p);
+    }
+
+    pub fn check(&self) -> bool {
+        self.balance() == Decimal::ZERO
+    }
+
+    pub fn balance(&self) -> Decimal {
+        self.postings
+            .iter()
+            .fold(Decimal::ZERO, |x, p| x + p.value)
+            .normalize()
+    }
+}
+
+impl Serialize for Transaction {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        let date = (
+            self.transaction_date.year(),
+            self.transaction_date.month(),
+            self.transaction_date.day(),
+        );
+        let mut s = serializer.serialize_struct("Transaction", 4)?;
+        s.serialize_field("id", &self.id)?;
+        s.serialize_field("transaction_date", &date)?;
+        s.serialize_field("description", &self.description)?;
+        s.serialize_field("postings", &self.postings)?;
+        s.end()
     }
 }
 
@@ -44,7 +88,7 @@ pub struct Subscription {
 impl Subscription {
     pub fn check(&self) -> bool {
         // Has the potential to overflow, but unlikely
-        self.postings.iter().fold(0, |x, p| x + p.value) == 0_i64
+        self.postings.iter().fold(Decimal::ZERO, |x, p| x + p.value) == Decimal::ZERO
     }
 
     pub fn add_posting(&mut self, p: Posting) {

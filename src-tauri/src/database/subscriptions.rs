@@ -1,4 +1,5 @@
 use rusqlite::{named_params, Connection, Error, Transaction};
+use rust_decimal::Decimal;
 
 use crate::types::{Posting, Subscription, SubscriptionFrequency};
 
@@ -201,7 +202,7 @@ pub fn get_sub_templates_by_sub_id(
         ps.push(Posting {
             id: row.get(0).unwrap(),
             account: row.get(1).unwrap(),
-            value: row.get(2).unwrap(),
+            value: Decimal::from_str_exact(&row.get::<usize, String>(2).unwrap()).unwrap(),
             currency: row.get(3).unwrap(),
             comment: row.get(4).unwrap(),
         });
