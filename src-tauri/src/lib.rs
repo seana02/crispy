@@ -1,36 +1,56 @@
 use std::collections::HashMap;
 
-use database::transactions::{delete, get_all_transaction_list, get_recent_transactions, get_single_transaction, get_transaction_count, update};
+use database::{get_db_file, transactions::{delete, get_transaction_count, get_transaction_details, get_transactions_between, get_transactions_by_account, get_transactions_with_description, update}};
+use rusqlite::Connection;
 use rust_decimal::Decimal;
-use time::{Date, Month};
+use time::{macros::date, Date, Month};
 use types::{Posting, Transaction};
 
 mod database;
 mod error;
-mod state;
 mod types;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
+
+/// Gets a list of the most recent transactions
 #[tauri::command]
-fn get_transactions() -> Result<HashMap<i64,Transaction>, String> {
-    match get_all_transaction_list() {
-        Ok(t) => Ok(t),
-        Err(e) => {
-            println!("{}", e.to_string());
-            Err(e.to_string())
-        }
-    }
+fn get_all_transaction_list() -> Result<HashMap<i64,Transaction>, String> {
+    let mut conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
+    conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    get_transactions_between(&tx, date!{1970 - 1 - 1}, Date::MAX).map_err(|e| e.to_string())
 }
 
+/// Get a complete transaction
 #[tauri::command]
-fn get_transaction_details(id: i64) -> Result<Transaction, String> {
-    match get_single_transaction(id) {
-        Ok(t) => Ok(t),
-        Err(e) => {
-            println!("{}", e.to_string());
-            Err(e.to_string())
-        }
-    }
+fn get_transaction_by_id(id: i64) -> Result<Transaction, String> {
+    let mut conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    get_transaction_details(&tx, id).map_err(|e| e.to_string())
+}
+
+/// Get list of transactions between given dates
+#[tauri::command]
+fn get_all_transactions_between(since: Option<Date>, until: Option<Date>) -> Result<HashMap<i64, Transaction>, String> {
+    let mut conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    get_transactions_between(&tx, since.unwrap_or(date!{1970 - 1 - 1}), until.unwrap_or(Date::MAX)).map_err(|e| e.to_string())
+}
+
+// Get list of transactions with associated account
+#[tauri::command]
+fn get_transactions_involving_account(acct: String) -> Result<HashMap<i64, Transaction>, String> {
+    let mut conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    get_transactions_by_account(&tx, &acct).map_err(|e| e.to_string())
+}
+
+// Get list of transactions with given string in description or posting comments
+#[tauri::command]
+fn get_transactions_by_text(text: String) -> Result<HashMap<i64, Transaction>, String> {
+    let mut conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
+    let tx = conn.transaction().map_err(|e| e.to_string())?;
+    get_transactions_with_description(&tx, &text).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -95,15 +115,6 @@ fn delete_transaction(id: i64) -> Result<(), String> {
 }
 
 #[tauri::command]
-fn get_latest_transactions(limit: i64, offset: i64) -> Result<HashMap<i64,Transaction>, String> {
-    let result = get_recent_transactions(limit, Some(offset));
-    match result {
-        Ok(t_list) => Ok(t_list),
-        Err(e) => Err(e.to_string()),
-    }
-}
-
-#[tauri::command]
 fn get_row_count() -> Result<i32, String> {
     match get_transaction_count() {
         Ok(i) => Ok(i),
@@ -138,14 +149,10 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
         .invoke_handler(tauri::generate_handler![
-            get_transactions,
-            get_transaction_details,
-            add_transaction,
-            update_transaction,
-            get_latest_transactions,
-            get_row_count,
-            delete_transaction,
-            validate
+            get_all_transaction_list,
+            get_transaction_by_id,
+            get_all_transactions_between,
+            get_transactions_involving_account,
         ])
         .setup(|_| {
             database::init();

@@ -12,6 +12,6 @@ function generate_queryFn<T>(invoke_cmd: string) {
     }
 }
 
-export let getTransactions = generate_queryFn<TransactionData[]>('get_transactions');
-export let getTransactionDetails = generate_queryFn<TransactionData>('get_transaction_details');
+export let getTransactions = generate_queryFn<TransactionData[]>('get_all_transaction_list');
+export let getTransactionDetails = generate_queryFn<TransactionData>('get_transaction_by_id');
 

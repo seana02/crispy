@@ -1,9 +1,8 @@
 use std::collections::HashMap;
 
 use rusqlite::{named_params, Connection, Error};
-use rust_decimal::Decimal;
 use time::{
-    macros::{date, format_description},
+    macros::format_description,
     Date,
 };
 
@@ -14,22 +13,119 @@ use crate::{
 
 use super::get_db_file;
 
-/// Gets a list of the most recent transactions
-pub fn get_all_transaction_list() -> Result<HashMap<i64,Transaction>, Error> {
-    let mut conn = Connection::open(get_db_file())?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
-    let tx = conn.transaction()?;
-    let t_list =
-        get_transactions_between(&tx, date!(1970 - 1 - 1), Date::MAX, None, None)?;
-    Ok(t_list)
+/// Gets all transactions only (no postings) within specified dates
+/// since is inclusive, until is exclusive
+pub fn get_transactions_between(
+    tx: &rusqlite::Transaction,
+    since: Date,
+    until: Date,
+) -> Result<HashMap<i64, Transaction>, Error> {
+    let str = String::from(
+        "SELECT id, transaction_date, description
+        FROM transactions
+        WHERE transaction_date BETWEEN :since AND :until
+        ORDER BY transaction_date DESC, id DESC",
+    );
+    let format = format_description!("[year]-[month]-[day]");
+
+    let mut stmt = tx.prepare(&str)?;
+
+    let mut rows = stmt.query(named_params! {
+        ":since": &since.format(format).unwrap(),
+        ":until": &until.format(format).unwrap(),
+    })?;
+    let mut ts = HashMap::<i64, Transaction>::new();
+    while let Some(row) = rows.next()? {
+        ts.insert(row.get(0).unwrap(), Transaction {
+            id: row.get(0).unwrap(),
+            transaction_date: row.get(1).unwrap(),
+            description: row.get(2).unwrap(),
+            postings: Vec::new(),
+        });
+    }
+    Ok(ts)
 }
 
-/// Get a complete transaction
-pub fn get_single_transaction(id: i64) -> Result<Transaction, Error> {
-    let mut conn = Connection::open(get_db_file())?;
-    let tx = conn.transaction()?;
-    let transaction = get_transaction_by_id(&tx, id)?;
-    Ok(transaction)
+/// Gets a single complete transaction by id
+pub fn get_transaction_details(tx: &rusqlite::Transaction, id: i64) -> Result<Transaction, Error> {
+    let postings = get_postings_by_transaction_id(tx, id)?;
+    let result = tx.query_row(
+        "SELECT transaction_date, description
+        FROM transactions
+        WHERE id = :id",
+        named_params! {
+            ":id": id
+        },
+        |row| {
+            Ok(Transaction {
+                id: Some(id),
+                transaction_date: row.get(0).unwrap(),
+                description: row.get(1).unwrap(),
+                postings,
+            })
+        },
+    )?;
+    Ok(result)
+}
+
+/// Gets all transactions associated with the specified account
+pub fn get_transactions_by_account(
+    tx: &rusqlite::Transaction,
+    acct: &str
+) -> Result<HashMap<i64, Transaction>, Error> {
+    let str = String::from(
+        "SELECT transactions.id, transaction_date, description
+        FROM transacations
+        LEFT JOIN postings
+        ON postings.transaction_id = transactions.id
+        WHERE account LIKE \"%:acct%\"",
+    );
+
+    let mut stmt = tx.prepare(&str)?;
+    
+    let mut rows = stmt.query(named_params! {
+        ":acct": acct,
+    })?;
+
+    let mut ts = HashMap::new();
+    while let Some(row) = rows.next()? {
+        let t_id = row.get::<usize, i64>(1).unwrap();
+        ts.insert(t_id, Transaction {
+            id: row.get(0).unwrap(),
+            transaction_date:  row.get(1).unwrap(),
+            description: row.get(2).unwrap(),
+            postings: Vec::new(),
+        });
+    }
+    Ok(ts)
+}
+
+/// Get all transactions by description/posting comment text
+pub fn get_transactions_with_description(tx: &rusqlite::Transaction, text: &str) -> Result<HashMap<i64, Transaction>, Error> {
+    let str = String::from(
+        "SELECT DISTINCT transactions.id, transaction_date, description FROM transactions
+        LEFT JOIN postings
+        ON postings.transaction_id = transactions.id
+        WHERE postings.comment LIKE \"%:text%\"
+        OR transactions.description LIKE \":text\""
+    );
+    let mut stmt = tx.prepare(&str)?;
+
+    let mut rows = stmt.query(named_params! {
+        ":text": text,
+    })?;
+
+    let mut ts = HashMap::new();
+    while let Some(row) = rows.next()? {
+        let t_id = row.get::<usize, i64>(1).unwrap();
+        ts.insert(t_id, Transaction {
+            id:  row.get(0).unwrap(),
+            transaction_date: row.get(1).unwrap(),
+            description: row.get(2).unwrap(),
+            postings: Vec::new(),
+        });
+    }
+    Ok(ts)
 }
 
 /// Adds a complete transaction to the database
@@ -250,48 +346,13 @@ fn update_posting(
 
 /// Gets the count of transactions
 pub fn get_transaction_count() ->  Result<i32, Error> {
-    let mut conn = Connection::open(get_db_file())?;
+    let conn = Connection::open(get_db_file())?;
     conn.pragma_update(None, "foreign_keys", "ON")?;
     conn.query_row("SELECT COUNT() FROM transactions", [], |row| row.get(0))
 }
 
-/// Gets a list of the most recent transactions
-pub fn get_recent_transactions(limit: i64, offset: Option<i64>) -> Result<HashMap<i64,Transaction>, Error> {
-    let mut conn = Connection::open(get_db_file())?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
-    let tx = conn.transaction()?;
-    let mut t_list =
-        get_transactions_between(&tx, date!(1970 - 1 - 1), Date::MAX, Some(limit), offset)?;
-    for (idx, t) in t_list.iter_mut() {
-        t.postings = get_postings_by_transaction_id(&tx, *idx)?;
-    }
-    Ok(t_list)
-}
-
-/// Gets a single transaction by id
-pub fn get_transaction_by_id(tx: &rusqlite::Transaction, id: i64) -> Result<Transaction, Error> {
-    let postings = get_postings_by_transaction_id(tx, id)?;
-    let result = tx.query_row(
-        "SELECT transaction_date, description
-        FROM transactions
-        WHERE id = :id",
-        named_params! {
-            ":id": id
-        },
-        |row| {
-            Ok(Transaction {
-                id: Some(id),
-                transaction_date: row.get(0).unwrap(),
-                description: row.get(1).unwrap(),
-                postings,
-            })
-        },
-    )?;
-    Ok(result)
-}
-
 /// Gets a vector of postings based on transaction id
-pub fn get_postings_by_transaction_id(
+fn get_postings_by_transaction_id(
     tx: &rusqlite::Transaction,
     id: i64,
 ) -> Result<Vec<Posting>, Error> {
@@ -310,105 +371,4 @@ pub fn get_postings_by_transaction_id(
         ))
     }
     Ok(ps)
-}
-
-/// Gets all transactions only (no postings) within specified dates
-/// since is inclusive, until is exclusive
-pub fn get_transactions_between(
-    tx: &rusqlite::Transaction,
-    since: Date,
-    until: Date,
-    row_limit: Option<i64>,
-    num_rows_skipped: Option<i64>,
-) -> Result<HashMap<i64, Transaction>, Error> {
-    let mut str = String::from(
-        "SELECT id, transaction_date, description
-        FROM transactions
-        WHERE transaction_date BETWEEN :since AND :until
-        ORDER BY transaction_date DESC, id DESC",
-    );
-    let format = format_description!("[year]-[month]-[day]");
-    let since = since.format(format).unwrap();
-    let until = until.format(format).unwrap();
-    let mut params: Vec<(&str, &dyn rusqlite::ToSql)> = vec![
-        (":since", &since),
-        (":until", &until),
-    ];
-
-    let row_limit_val = row_limit.unwrap_or(0);
-    if let Some(_) = row_limit {
-        str.push_str(" LIMIT :limit");
-        params.push((":limit", &row_limit_val));
-    }
-
-    let rows_skipped_val = num_rows_skipped.unwrap_or(0);
-    if let Some(_) = num_rows_skipped {
-        str.push_str(" OFFSET :off");
-        params.push((":off", &rows_skipped_val));
-    }
-
-    let mut stmt = tx.prepare(&str)?;
-
-    let mut rows = stmt.query(&params[..])?;
-    let mut ts = HashMap::<i64, Transaction>::new();
-    while let Some(row) = rows.next()? {
-        ts.insert(row.get(0).unwrap(), Transaction {
-            id: row.get(0).unwrap(),
-            transaction_date: row.get(1).unwrap(),
-            description: row.get(2).unwrap(),
-            postings: Vec::new(),
-        });
-    }
-    Ok(ts)
-}
-
-/// Gets all transactions associated with the specified account
-/// If get_entire_transaction is true, it returns the entire associated transaction;
-/// otherwise it only returns the relevant postings
-pub fn get_transctions_by_account(
-    tx: &rusqlite::Transaction,
-    acct: &str,
-    get_entire_transaction: bool,
-    row_limit: Option<i64>,
-    num_rows_skipped: Option<i64>,
-) -> Result<Vec<Transaction>, Error> {
-    let mut str = String::from(
-        "SELECT id, transaction_id, account, value, currency, comment 
-        FROM postings
-        WHERE account = :acct",
-    );
-
-    if let Some(_) = row_limit {
-        str.push_str(" LIMIT :limit");
-    }
-
-    if let Some(_) = num_rows_skipped {
-        str.push_str(" OFFSET :off");
-    }
-
-    let mut stmt = tx.prepare(&str)?;
-
-    let mut rows = stmt.query(named_params! {
-        ":acct": acct,
-        ":limit": row_limit.unwrap_or(0),
-        ":off": num_rows_skipped.unwrap_or(0)
-    })?;
-    let mut ts = Vec::new();
-    while let Some(row) = rows.next()? {
-        let t_id = row.get::<usize, i64>(1).unwrap();
-        let mut transaction_obj = get_transaction_by_id(tx, t_id)?;
-        if get_entire_transaction {
-            transaction_obj.postings = get_postings_by_transaction_id(tx, t_id)?;
-        } else {
-            transaction_obj.add_posting(Posting::new(
-                row.get(0).unwrap(),
-                row.get(2).unwrap(),
-                row.get(3).unwrap(),
-                row.get(4).unwrap(),
-                row.get(5).unwrap(),
-            ));
-        }
-        ts.push(transaction_obj);
-    }
-    Ok(ts)
 }

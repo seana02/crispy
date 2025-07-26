@@ -1,13 +1,20 @@
-DB operations module
-- CRUD transactions
-    - C: 1 Transaction obj + many Posting obj
-        - validate zero-sum (separate function for reuse)
-        - DB TRIGGER rules for auto postings (see hledger docs)
-    - R: by id, search by desc (multiple)
-        - transaction by id
-        - all postings by transaction id
-        - transactions between dates
-        - transactions by associated account
-        - transactions by associated account with only relevant postings
-    - U: Option parameters, with unmodified entries being None
-    - D: by id
+aggregate/summary information:
+- previous month income
+- current month income
+- current liabilities
+- current month spending
+
+filters:
+- date range
+- account
+- text search (transaction description and posting comment)
+
+functions:
+get_all_transaction_list                            get a list of transactions with no posting information
+get_transaction_by_id                               get complete information about a single transaction
+get_transactions_between                            get a list of transactions with no posting information between the given dates
+get_transactions_involving_accounts                 get a list of transactions with no posting information involving the given account
+get_transactions_with_description                   get a list of transactions with no posting information containing a text string in the description or comments
+create_transaction                                  insert transaction+postings by id
+delete_transaction                                  delete transaction+postings by id
+update_transaction                                  update transaction+postings by id
