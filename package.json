@@ -1,5 +1,5 @@
 {
-  "name": "crispy",
+  "name": "crispy-tanstack",
   "private": true,
   "version": "0.1.0",
   "type": "module",
@@ -10,19 +10,25 @@
     "tauri": "tauri"
   },
   "dependencies": {
-    "@tauri-apps/api": ">=2.0.0-rc.0",
-    "@tauri-apps/plugin-shell": ">=2.0.0-rc.0",
-    "react": "^18.2.0",
-    "react-collapsible": "^2.10.0",
-    "react-datepicker": "^8.1.0",
-    "react-dom": "^18.2.0"
+    "@tailwindcss/vite": "^4.1.11",
+    "@tanstack/react-form": "^1.14.2",
+    "@tanstack/react-query": "^5.83.0",
+    "@tanstack/react-router": "^1.128.8",
+    "@tanstack/react-router-devtools": "^1.128.8",
+    "@tanstack/react-table": "^8.21.3",
+    "@tanstack/router-plugin": "^1.128.8",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-opener": "^2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "tailwindcss": "^4.1.11"
   },
   "devDependencies": {
-    "@tauri-apps/cli": ">=2.0.0-rc.0",
-    "@types/react": "^18.2.15",
-    "@types/react-dom": "^18.2.7",
-    "@vitejs/plugin-react": "^4.2.1",
-    "typescript": "^5.2.2",
-    "vite": "^5.3.1"
+    "@tauri-apps/cli": "^2",
+    "@types/react": "^18.3.1",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "~5.6.2",
+    "vite": "^6.0.3"
   }
 }

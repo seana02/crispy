@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use rusqlite::{named_params, Connection, Error};
 use rust_decimal::Decimal;
 use time::{
@@ -11,6 +13,24 @@ use crate::{
 };
 
 use super::get_db_file;
+
+/// Gets a list of the most recent transactions
+pub fn get_all_transaction_list() -> Result<HashMap<i64,Transaction>, Error> {
+    let mut conn = Connection::open(get_db_file())?;
+    conn.pragma_update(None, "foreign_keys", "ON")?;
+    let tx = conn.transaction()?;
+    let t_list =
+        get_transactions_between(&tx, date!(1970 - 1 - 1), Date::MAX, None, None)?;
+    Ok(t_list)
+}
+
+/// Get a complete transaction
+pub fn get_single_transaction(id: i64) -> Result<Transaction, Error> {
+    let mut conn = Connection::open(get_db_file())?;
+    let tx = conn.transaction()?;
+    let transaction = get_transaction_by_id(&tx, id)?;
+    Ok(transaction)
+}
 
 /// Adds a complete transaction to the database
 pub fn insert(t: Transaction) -> Result<(), TransactionError> {
@@ -228,22 +248,29 @@ fn update_posting(
     Ok(())
 }
 
-/// Gets a list of the most recent transactions
-pub fn get_recent_transactions(limit: i64, offset: Option<i64>) -> Result<Vec<Transaction>, Error> {
+/// Gets the count of transactions
+pub fn get_transaction_count() ->  Result<i32, Error> {
     let mut conn = Connection::open(get_db_file())?;
     conn.pragma_update(None, "foreign_keys", "ON")?;
+    conn.query_row("SELECT COUNT() FROM transactions", [], |row| row.get(0))
+}
+
+/// Gets a list of the most recent transactions
+pub fn get_recent_transactions(limit: i64, offset: Option<i64>) -> Result<HashMap<i64,Transaction>, Error> {
+    let mut conn = Connection::open(get_db_file())?;
     conn.pragma_update(None, "foreign_keys", "ON")?;
     let tx = conn.transaction()?;
     let mut t_list =
         get_transactions_between(&tx, date!(1970 - 1 - 1), Date::MAX, Some(limit), offset)?;
-    for t in t_list.iter_mut() {
-        t.postings = get_postings_by_transaction_id(&tx, t.id.unwrap())?;
+    for (idx, t) in t_list.iter_mut() {
+        t.postings = get_postings_by_transaction_id(&tx, *idx)?;
     }
     Ok(t_list)
 }
 
-/// Gets a single transaction by id with no postings
+/// Gets a single transaction by id
 pub fn get_transaction_by_id(tx: &rusqlite::Transaction, id: i64) -> Result<Transaction, Error> {
+    let postings = get_postings_by_transaction_id(tx, id)?;
     let result = tx.query_row(
         "SELECT transaction_date, description
         FROM transactions
@@ -256,7 +283,7 @@ pub fn get_transaction_by_id(tx: &rusqlite::Transaction, id: i64) -> Result<Tran
                 id: Some(id),
                 transaction_date: row.get(0).unwrap(),
                 description: row.get(1).unwrap(),
-                postings: Vec::new(),
+                postings,
             })
         },
     )?;
@@ -279,7 +306,7 @@ pub fn get_postings_by_transaction_id(
             row.get(1).unwrap(),
             row.get(2).unwrap(),
             row.get(3).unwrap(),
-            row.get(4).unwrap(),
+            row.get(4).unwrap_or(String::new()),
         ))
     }
     Ok(ps)
@@ -293,35 +320,39 @@ pub fn get_transactions_between(
     until: Date,
     row_limit: Option<i64>,
     num_rows_skipped: Option<i64>,
-) -> Result<Vec<Transaction>, Error> {
+) -> Result<HashMap<i64, Transaction>, Error> {
     let mut str = String::from(
         "SELECT id, transaction_date, description
         FROM transactions
         WHERE transaction_date BETWEEN :since AND :until
         ORDER BY transaction_date DESC, id DESC",
     );
+    let format = format_description!("[year]-[month]-[day]");
+    let since = since.format(format).unwrap();
+    let until = until.format(format).unwrap();
+    let mut params: Vec<(&str, &dyn rusqlite::ToSql)> = vec![
+        (":since", &since),
+        (":until", &until),
+    ];
 
+    let row_limit_val = row_limit.unwrap_or(0);
     if let Some(_) = row_limit {
         str.push_str(" LIMIT :limit");
+        params.push((":limit", &row_limit_val));
     }
 
+    let rows_skipped_val = num_rows_skipped.unwrap_or(0);
     if let Some(_) = num_rows_skipped {
         str.push_str(" OFFSET :off");
+        params.push((":off", &rows_skipped_val));
     }
 
     let mut stmt = tx.prepare(&str)?;
 
-    let format = format_description!("[year]-[month]-[day]");
-    let mut rows = stmt.query(named_params! {
-        ":since": since.format(format).unwrap(),
-        ":until": until.format(format).unwrap(),
-        // ":limit": row_limit.unwrap_or(0),
-        ":limit": row_limit.unwrap(),
-        ":off": num_rows_skipped.unwrap_or(0)
-    })?;
-    let mut ts = Vec::new();
+    let mut rows = stmt.query(&params[..])?;
+    let mut ts = HashMap::<i64, Transaction>::new();
     while let Some(row) = rows.next()? {
-        ts.push(Transaction {
+        ts.insert(row.get(0).unwrap(), Transaction {
             id: row.get(0).unwrap(),
             transaction_date: row.get(1).unwrap(),
             description: row.get(2).unwrap(),

@@ -7,7 +7,7 @@ use rusqlite::{
 use rust_decimal::Decimal;
 use serde::{ser::SerializeStruct, Deserialize, Serialize, Serializer};
 use tauri::utils::acl::ParseIdentifierError;
-use time::Date;
+use time::{format_description, Date};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Posting {
@@ -63,14 +63,15 @@ impl Transaction {
 
 impl Serialize for Transaction {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        let date = (
-            self.transaction_date.year(),
-            self.transaction_date.month(),
-            self.transaction_date.day(),
-        );
+        //let date = (
+        //    self.transaction_date.year(),
+        //    self.transaction_date.month(),
+        //    self.transaction_date.day(),
+        //);
         let mut s = serializer.serialize_struct("Transaction", 4)?;
         s.serialize_field("id", &self.id)?;
-        s.serialize_field("transaction_date", &date)?;
+        //s.serialize_field("transaction_date", &date)?;
+        s.serialize_field("transaction_date", &self.transaction_date.format(&format_description::parse("[year]-[month]-[day]").unwrap()).unwrap())?;
         s.serialize_field("description", &self.description)?;
         s.serialize_field("postings", &self.postings)?;
         s.end()

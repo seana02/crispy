@@ -42,7 +42,7 @@
 |id|INTEGER PRIMARY KEY|id of template posting|
 |subscription_id|INTEGER|foreign key constraint referencing subscriptions.id|
 |account|TEXT NOT NULL|affected account name|
-|value|INTEGER NOT NULL|amount change|
-|currency|TEXT NOT NULL|unit of currency|
+|value|TEXT NOT NULL|amount change|
+|currency|TEXT NOT NULL DEFAULT 'USD'|unit of currency|
 |comment|TEXT|space for additional comment|
 
