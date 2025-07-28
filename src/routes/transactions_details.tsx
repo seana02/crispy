@@ -3,8 +3,9 @@ import { createRoute } from "@tanstack/react-router";
 import { transactionRoute } from "./transactions";
 import { PostingData, TransactionData } from "../types";
 import { getTransactionDetails } from "../api";
-import { useForm } from "@tanstack/react-form";
+import { FieldApi, useForm } from "@tanstack/react-form";
 import { useEffect } from "react";
+import { TransactionForm } from "@/components/transaction_form";
 
 export const transactionDetailsRoute = createRoute({
     getParentRoute: () => transactionRoute,
@@ -13,12 +14,13 @@ export const transactionDetailsRoute = createRoute({
 });
 
 function TransactionDetails() {
+    const formDefault = {
+        date: new Date(),
+        description: "",
+        postings: [] as PostingData[],
+    }
     const transactionForm = useForm({
-        defaultValues: {
-            date: new Date(),
-            description: "",
-            postings: [] as PostingData[],
-        },
+        defaultValues: formDefault,
         onSubmit: async ({ value }) => console.log(value)
     });
 
@@ -42,87 +44,11 @@ function TransactionDetails() {
     if (isError) return <div>Error: {error.message}</div>
 
     return (
-        <div className="flex flex-col">
-            <form onSubmit={e => {
-                e.preventDefault();
-                transactionForm.handleSubmit();
-            }}>
-                <transactionForm.Field name="date">
-                    {field => (
-                        <div className="w-96">
-                            <label htmlFor="date">Date: </label>
-                            <input
-                                type="text"
-                                id="date"
-                                name="date"
-                                value={field.state.value.toString()}
-                                onChange={e => field.handleChange(new Date(e.target.value))}
-                            />
-                        </div>
-                    )}
-                </transactionForm.Field>
-                <transactionForm.Field name="description" >
-                    {field => (
-                        <div className="w-96">
-                            <label htmlFor="description">Description: </label>
-                            <input
-                                type="text"
-                                id="description"
-                                name="description"
-                                value={field.state.value}
-                                onChange={e => field.handleChange(e.target.value)}
-                            />
-                        </div>
-                    )}
-                </transactionForm.Field>
-                <transactionForm.Field name="postings" mode="array">
-                    {field => (
-                        <div>
-                            {field.state.value.map((_, i) => (
-                                <div key={i} className="flex flex-1 gap-2">
-                                    <transactionForm.Field name={`postings[${i}].account`}>
-                                        {subField => (
-                                            <div className="flex gap-2 w-96">
-                                                <label htmlFor={`postings[${i}].account`}>{'Account:'}</label>
-                                                <input
-                                                    value={subField.state.value}
-                                                    onChange={e => subField.handleChange(e.target.value)}
-                                                    className="flex-1"
-                                                />
-                                            </div>
-                                        )}
-                                    </transactionForm.Field>
-                                    <transactionForm.Field name={`postings[${i}].value`}>
-                                        {subField => (
-                                            <div className="flex gap-2 w-24">
-                                                <label htmlFor={`postings[${i}].account`}>{'Value:'}</label>
-                                                <input
-                                                    value={subField.state.value}
-                                                    onChange={e => subField.handleChange(e.target.value)}
-                                                    className="flex-1"
-                                                />
-                                            </div>
-                                        )}
-                                    </transactionForm.Field>
-                                    <transactionForm.Field name={`postings[${i}].currency`}>
-                                        {subField => (
-                                            <div className="flex gap-2 w-24">
-                                                <label htmlFor={`postings[${i}].account`}>{''}</label>
-                                                <input
-                                                    value={subField.state.value}
-                                                    onChange={e => subField.handleChange(e.target.value)}
-                                                    className="flex-1"
-                                                />
-                                            </div>
-                                        )}
-                                    </transactionForm.Field>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </transactionForm.Field>
-            </form>
-        </div>
+        <TransactionForm
+            date={data.transaction_date}
+            description={data.description}
+            postings={data.postings}
+            onSubmit={() => console.log("submitted")}
+        />
     );
 }
-
