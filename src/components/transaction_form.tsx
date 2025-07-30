@@ -1,7 +1,7 @@
 import { useForm } from "@tanstack/react-form";
 import { Input } from "./Input";
 import { useEffect, useRef, useState } from "react";
-import { DayPicker } from "react-day-picker";
+import { DayPicker, getDefaultClassNames } from "react-day-picker";
 import 'react-day-picker/style.css';
 
 interface TransactionFormProps {
@@ -57,19 +57,23 @@ export function TransactionForm(props: TransactionFormProps) {
                                 <div className="relative">
                                     <div
                                         // onClose={() => setIsDialogOpen(false)}
-                                        className={`absolute top-full bg-black border p-2 ${isDialogOpen ? '' : 'hidden'}`}
+                                        className={`absolute top-[100%] bg-black border border-blue-400 rounded-lg p-2 ${isDialogOpen ? '' : 'hidden'}`}
                                     >
                                         <DayPicker
                                             month={month}
                                             onMonthChange={setMonth}
                                             autoFocus
                                             mode="single"
+                                            timeZone="UTC"
                                             selected={field.state.value}
                                             onSelect={d => field.handleChange(d as Date)}
                                             classNames={{
                                                 today: 'text-green-200',
-                                                selected: 'rdp-selected [&>*]:border-blue-200!'
+                                                selected: 'rdp-selected [&>*]:border-blue-200!',
+                                                chevron: 'fill-blue-400',
+                                                month_caption: `${getDefaultClassNames().month_caption} mx-3`
                                             }}
+                                            required
                                         />
                                     </div>
                                     <Input
@@ -77,7 +81,7 @@ export function TransactionForm(props: TransactionFormProps) {
                                         id="date"
                                         name="date"
                                         className="w-30 text-lg text-white"
-                                        value={field.state.value instanceof Date ? field.state.value.toISOString().slice(0, 10) : ''}
+                                        value={new Date(field.state.value).toISOString().slice(0, 10)}
                                         onChange={e => field.handleChange(new Date(e.target.value))}
                                         onClick={e => {
                                             e.preventDefault();
@@ -109,16 +113,17 @@ export function TransactionForm(props: TransactionFormProps) {
                         <div>
                             <div className="flex gap-4 [&>*]:border-b-2 [&>*]:border-green-300">
                                 <div className="w-8 text-right">ID</div>
-                                <div className="min-w-[249px] grow-[5]">Account</div>
-                                <div className="min-w-[249px] grow-[1]">Value</div>
+                                <div className="min-w-[249px] grow-[8]">Account</div>
+                                <div className="min-w-[249px] grow-[1] text-right">Value</div>
                                 <div className="min-w-0 w-12">CCY</div>
+                                <div className="w-[30px] mx-[-8px] text-center">X</div>
                             </div>
                             {field.state.value.map((_, i) => (
                                 <div key={i} className="flex gap-4 my-3">
                                     <div className="w-8 text-right">{i}</div>
                                     <transactionForm.Field name={`postings[${i}].account`}>
                                         {subField => (
-                                            <div className="min-w-0 grow-[5]">
+                                            <div className="min-w-0 grow-[8]">
                                                 <Input
                                                     value={subField.state.value}
                                                     onChange={e => subField.handleChange(e.target.value)}
@@ -149,12 +154,58 @@ export function TransactionForm(props: TransactionFormProps) {
                                             </div>
                                         )}
                                     </transactionForm.Field>
+                                    <ConfirmationButton
+                                        className="border rounded-md border-red-200 hover:border-red-400 w-[30px] h-[30px] mx-[-8px]"
+                                        onConfirm={() => field.removeValue(i)}
+                                        baseText={"?"}
+                                        confirmationText={"X"}
+                                    />
                                 </div>
                             ))}
+                            <button
+                                onClick={() => field.pushValue({ account: '', value: '', currency: 'USD', comment: '' })}
+                                type="button"
+                                className="border rounded-lg border-blue-200 hover:border-blue-400 w-full"
+                            >
+                                Add Posting
+                            </button>
                         </div>
                     )}
                 </transactionForm.Field>
             </form>
         </div>
+    );
+}
+
+function ConfirmationButton({ onConfirm, className, baseText, confirmationText }: { onConfirm: () => void, className: string, baseText: string, confirmationText: string }) {
+    let [ clicked, setClicked ] = useState(false);
+    let [ buffer, setBuffer ] = useState(false);
+
+    return (clicked && buffer) ? 
+    (
+        <button
+            className={className}
+                onClick={() => {
+                    setClicked(false);
+                    setBuffer(false);
+                    onConfirm();
+                }}
+        >
+            {confirmationText}
+        </button>
+    ) : (
+        <button
+            className={className}
+            onClick={() => {
+                setClicked(true);
+                setTimeout(() => setBuffer(true), 10);
+                setTimeout(() => {
+                    setClicked(false);
+                    setBuffer(false);
+                }, 2000);
+            }}
+        >
+            {baseText}
+        </button>
     );
 }
