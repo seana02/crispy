@@ -7,6 +7,7 @@ interface InputProps {
     value?: string,
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
     onClick?:  (e: React.MouseEvent<HTMLInputElement>) => void,
+    onBlur?: () => void,
 }
 
 export function Input(props: InputProps) {
@@ -20,6 +21,7 @@ export function Input(props: InputProps) {
             value={props.value || ""}
             onChange={props.onChange}
             onClick={props.onClick}
+            onBlur={props.onBlur}
         />
     );
 }

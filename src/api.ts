@@ -14,4 +14,7 @@ function generate_queryFn<T>(invoke_cmd: string) {
 
 export let getTransactions = generate_queryFn<TransactionData[]>('get_all_transaction_list');
 export let getTransactionDetails = generate_queryFn<TransactionData>('get_transaction_by_id');
+export let updateTransaction = generate_queryFn<boolean>('update_transaction');
+export let addTransaction = generate_queryFn<number>('add_transaction');
+export let delete_transaction = generate_queryFn<boolean>('delete_transaction');
 

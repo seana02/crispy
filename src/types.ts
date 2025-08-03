@@ -1,6 +1,6 @@
 export interface TransactionData {
     id: number,
-    transaction_date: Date,
+    transaction_date: string,
     description: string,
     postings: PostingData[],
 };

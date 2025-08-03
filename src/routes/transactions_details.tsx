@@ -1,10 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createRoute } from "@tanstack/react-router";
 import { transactionRoute } from "./transactions";
 import { PostingData, TransactionData } from "../types";
-import { getTransactionDetails } from "../api";
-import { FieldApi, useForm } from "@tanstack/react-form";
-import { useEffect } from "react";
+import { getTransactionDetails, updateTransaction } from "../api";
 import { TransactionForm } from "@/components/transaction_form";
 
 export const transactionDetailsRoute = createRoute({
@@ -14,41 +12,30 @@ export const transactionDetailsRoute = createRoute({
 });
 
 function TransactionDetails() {
-    const formDefault = {
-        date: new Date(),
-        description: "",
-        postings: [] as PostingData[],
-    }
-    const transactionForm = useForm({
-        defaultValues: formDefault,
-        onSubmit: async ({ value }) => console.log(value)
-    });
+    const queryClient = useQueryClient();
 
     const { id } = transactionDetailsRoute.useParams();
     const { isPending, isError, data, error } = useQuery<TransactionData>({
         queryKey: ['transaction_details', id],
         queryFn: () => getTransactionDetails({ id: +id }),
+        staleTime: Infinity,
     });
-
-    useEffect(() => {
-        if (data) {
-            transactionForm.reset({
-                date: data.transaction_date,
-                description: data.description,
-                postings: data.postings,
-            });
-        }
-    }, [data]);
 
     if (isPending) return <div>Pending...</div>
     if (isError) return <div>Error: {error.message}</div>
+
+    const submit = (year: number, month: number, day: number, postings: PostingData[], desc: string, deleteList: number[]) => {
+        updateTransaction({ id: +id, year, month, day, postings, desc, deleteList });
+        queryClient.invalidateQueries({ queryKey: ['transaction_details', `${id}`] })
+        queryClient.invalidateQueries({ queryKey: ['transactions'] })
+    };
 
     return (
         <TransactionForm
             date={data.transaction_date}
             description={data.description}
             postings={data.postings}
-            onSubmit={() => console.log("submitted")}
+            onSubmit={submit}
         />
     );
 }

@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
 use rusqlite::{named_params, Connection, Error};
-use time::{
-    macros::format_description,
-    Date,
-};
+use time::{macros::format_description, Date};
 
 use crate::{
     error::TransactionError,
@@ -16,7 +13,7 @@ use super::get_db_file;
 /// Gets all transactions only (no postings) within specified dates
 /// since is inclusive, until is exclusive
 pub fn get_transactions_between(
-    tx: &rusqlite::Transaction,
+    conn: &rusqlite::Connection,
     since: Date,
     until: Date,
 ) -> Result<HashMap<i64, Transaction>, Error> {
@@ -28,7 +25,7 @@ pub fn get_transactions_between(
     );
     let format = format_description!("[year]-[month]-[day]");
 
-    let mut stmt = tx.prepare(&str)?;
+    let mut stmt = conn.prepare(&str)?;
 
     let mut rows = stmt.query(named_params! {
         ":since": &since.format(format).unwrap(),
@@ -36,20 +33,23 @@ pub fn get_transactions_between(
     })?;
     let mut ts = HashMap::<i64, Transaction>::new();
     while let Some(row) = rows.next()? {
-        ts.insert(row.get(0).unwrap(), Transaction {
-            id: row.get(0).unwrap(),
-            transaction_date: row.get(1).unwrap(),
-            description: row.get(2).unwrap(),
-            postings: Vec::new(),
-        });
+        ts.insert(
+            row.get(0).unwrap(),
+            Transaction {
+                id: row.get(0).unwrap(),
+                transaction_date: row.get(1).unwrap(),
+                description: row.get(2).unwrap(),
+                postings: Vec::new(),
+            },
+        );
     }
     Ok(ts)
 }
 
 /// Gets a single complete transaction by id
-pub fn get_transaction_details(tx: &rusqlite::Transaction, id: i64) -> Result<Transaction, Error> {
-    let postings = get_postings_by_transaction_id(tx, id)?;
-    let result = tx.query_row(
+pub fn get_transaction_details(conn: &rusqlite::Connection, id: i64) -> Result<Transaction, Error> {
+    let postings = get_postings_by_transaction_id(conn, id)?;
+    let result = conn.query_row(
         "SELECT transaction_date, description
         FROM transactions
         WHERE id = :id",
@@ -70,8 +70,8 @@ pub fn get_transaction_details(tx: &rusqlite::Transaction, id: i64) -> Result<Tr
 
 /// Gets all transactions associated with the specified account
 pub fn get_transactions_by_account(
-    tx: &rusqlite::Transaction,
-    acct: &str
+    conn: &rusqlite::Connection,
+    acct: &str,
 ) -> Result<HashMap<i64, Transaction>, Error> {
     let str = String::from(
         "SELECT transactions.id, transaction_date, description
@@ -81,8 +81,8 @@ pub fn get_transactions_by_account(
         WHERE account LIKE \"%:acct%\"",
     );
 
-    let mut stmt = tx.prepare(&str)?;
-    
+    let mut stmt = conn.prepare(&str)?;
+
     let mut rows = stmt.query(named_params! {
         ":acct": acct,
     })?;
@@ -90,26 +90,32 @@ pub fn get_transactions_by_account(
     let mut ts = HashMap::new();
     while let Some(row) = rows.next()? {
         let t_id = row.get::<usize, i64>(1).unwrap();
-        ts.insert(t_id, Transaction {
-            id: row.get(0).unwrap(),
-            transaction_date:  row.get(1).unwrap(),
-            description: row.get(2).unwrap(),
-            postings: Vec::new(),
-        });
+        ts.insert(
+            t_id,
+            Transaction {
+                id: row.get(0).unwrap(),
+                transaction_date: row.get(1).unwrap(),
+                description: row.get(2).unwrap(),
+                postings: Vec::new(),
+            },
+        );
     }
     Ok(ts)
 }
 
 /// Get all transactions by description/posting comment text
-pub fn get_transactions_with_description(tx: &rusqlite::Transaction, text: &str) -> Result<HashMap<i64, Transaction>, Error> {
+pub fn get_transactions_with_description(
+    conn: &rusqlite::Connection,
+    text: &str,
+) -> Result<HashMap<i64, Transaction>, Error> {
     let str = String::from(
         "SELECT DISTINCT transactions.id, transaction_date, description FROM transactions
         LEFT JOIN postings
         ON postings.transaction_id = transactions.id
         WHERE postings.comment LIKE \"%:text%\"
-        OR transactions.description LIKE \":text\""
+        OR transactions.description LIKE \":text\"",
     );
-    let mut stmt = tx.prepare(&str)?;
+    let mut stmt = conn.prepare(&str)?;
 
     let mut rows = stmt.query(named_params! {
         ":text": text,
@@ -118,24 +124,24 @@ pub fn get_transactions_with_description(tx: &rusqlite::Transaction, text: &str)
     let mut ts = HashMap::new();
     while let Some(row) = rows.next()? {
         let t_id = row.get::<usize, i64>(1).unwrap();
-        ts.insert(t_id, Transaction {
-            id:  row.get(0).unwrap(),
-            transaction_date: row.get(1).unwrap(),
-            description: row.get(2).unwrap(),
-            postings: Vec::new(),
-        });
+        ts.insert(
+            t_id,
+            Transaction {
+                id: row.get(0).unwrap(),
+                transaction_date: row.get(1).unwrap(),
+                description: row.get(2).unwrap(),
+                postings: Vec::new(),
+            },
+        );
     }
     Ok(ts)
 }
 
 /// Adds a complete transaction to the database
-pub fn insert(t: Transaction) -> Result<(), TransactionError> {
+pub fn insert(tx: &rusqlite::Transaction, t: Transaction) -> Result<i64, TransactionError> {
     if !t.check() {
         return Err(TransactionError::UnbalancedPostingError);
     }
-    let mut conn = Connection::open(get_db_file())?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
-    let tx = conn.transaction()?;
     let rowid = insert_transaction(&tx, t.transaction_date, &t.description)?;
     for p in t.postings.iter() {
         insert_posting(
@@ -147,18 +153,14 @@ pub fn insert(t: Transaction) -> Result<(), TransactionError> {
             &p.comment,
         )?;
     }
-    tx.commit()?;
-    Ok(())
+    Ok(rowid)
 }
 
 /// Updates a complete transaction in the database
-pub fn update(t: Transaction) -> Result<(), TransactionError> {
+pub fn update(tx: &rusqlite::Transaction, t: Transaction, delete_list: Vec<i64>) -> Result<(), TransactionError> {
     if !t.check() {
         return Err(TransactionError::UnbalancedPostingError);
     }
-    let mut conn = Connection::open(get_db_file())?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
-    let tx = conn.transaction()?;
     update_transaction(
         &tx,
         t.id.unwrap(),
@@ -166,17 +168,31 @@ pub fn update(t: Transaction) -> Result<(), TransactionError> {
         Some(&t.description),
     )?;
     for p in t.postings.iter() {
-        update_posting(
-            &tx,
-            t.id.unwrap(),
-            p.id.unwrap(),
-            Some(&p.account),
-            Some(&p.value.to_string()),
-            Some(&p.currency),
-            Some(&p.comment),
-        )?;
+        let id = p.id.unwrap();
+        if id == -1 {
+            insert_posting(
+                tx,
+                t.id.unwrap(),
+                &p.account,
+                &p.value.to_string(),
+                &p.currency,
+                &p.comment,
+            )?;
+        } else {
+            update_posting(
+                &tx,
+                t.id.unwrap(),
+                p.id.unwrap(),
+                Some(&p.account),
+                Some(&p.value.to_string()),
+                Some(&p.currency),
+                Some(&p.comment),
+            )?;
+        }
     }
-    tx.commit()?;
+    for i in delete_list.iter() {
+        delete_posting(tx, t.id.unwrap(), *i)?;
+    }
     Ok(())
 }
 
@@ -200,7 +216,7 @@ fn insert_transaction(
 /// Adds a single posting
 fn insert_posting(
     tx: &rusqlite::Transaction,
-    id: i64,
+    tx_id: i64,
     acct: &str,
     val: &str,
     currency: &str,
@@ -209,7 +225,7 @@ fn insert_posting(
     tx.execute(
         "INSERT INTO postings (transaction_id, account, value, currency, comment) VALUES (:tx_id, :acct, :val, :currency, :comment)",
         named_params! {
-            ":tx_id": id,
+            ":tx_id": tx_id,
             ":acct": acct,
             ":val": val,
             ":currency": currency,
@@ -220,27 +236,30 @@ fn insert_posting(
     Ok(())
 }
 
-pub fn delete(id: i64) -> Result<(), Error> {
-    let mut conn = Connection::open(get_db_file())?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
-    let tx = conn.transaction()?;
-    delete_transaction(&tx, id)?;
-    tx.commit()?;
-    Ok(())
-}
-
 /// Deletes a transaction by id and all associated postings
-fn delete_transaction(tx: &rusqlite::Transaction, id: i64) -> Result<(), Error> {
-    // SQLite enforces posting deletions
+/// SQLite enforces posting deletion
+pub fn delete(tx: &rusqlite::Transaction, id: i64) -> Result<(), Error> {
     tx.execute(
         "DELETE FROM transactions WHERE id=:id;",
         named_params! {
             ":id": id
         },
     )?;
-
     Ok(())
 }
+
+/// Deletes a transaction by id and all associated postings
+// fn delete_transaction(tx: &rusqlite::Transaction, id: i64) -> Result<(), Error> {
+//     // SQLite enforces posting deletions
+//     tx.execute(
+//         "DELETE FROM transactions WHERE id=:id;",
+//         named_params! {
+//             ":id": id
+//         },
+//     )?;
+//
+//     Ok(())
+// }
 
 /// Deletes a posting by transaction id and posting id
 pub fn delete_posting(tx: &rusqlite::Transaction, t_id: i64, id: i64) -> Result<(), Error> {
@@ -345,7 +364,7 @@ fn update_posting(
 }
 
 /// Gets the count of transactions
-pub fn get_transaction_count() ->  Result<i32, Error> {
+pub fn get_transaction_count() -> Result<i32, Error> {
     let conn = Connection::open(get_db_file())?;
     conn.pragma_update(None, "foreign_keys", "ON")?;
     conn.query_row("SELECT COUNT() FROM transactions", [], |row| row.get(0))
@@ -353,10 +372,10 @@ pub fn get_transaction_count() ->  Result<i32, Error> {
 
 /// Gets a vector of postings based on transaction id
 fn get_postings_by_transaction_id(
-    tx: &rusqlite::Transaction,
+    conn: &rusqlite::Connection,
     id: i64,
 ) -> Result<Vec<Posting>, Error> {
-    let mut stmt = tx.prepare(
+    let mut stmt = conn.prepare(
         "SELECT id, account, value, currency, comment FROM postings WHERE transaction_id = :id",
     )?;
     let mut rows = stmt.query(named_params! { ":id": id })?;
