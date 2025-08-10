@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { createRoute } from "@tanstack/react-router";
+import { createRoute, useRouter } from "@tanstack/react-router";
 import { transactionRoute } from "./transactions";
 import { PostingData, TransactionData } from "../types";
 import { getTransactionDetails, updateTransaction } from "../api";
@@ -32,6 +32,7 @@ function TransactionDetails() {
 
     return (
         <TransactionForm
+            key={data.id}
             date={data.transaction_date}
             description={data.description}
             postings={data.postings}

@@ -7,6 +7,7 @@ import { PostingData } from "@/types";
 import currency from "currency.js";
 import { ConfirmationButton } from "./ConfirmationButton";
 import { MdDelete, MdDeleteForever } from "react-icons/md";
+import { Combobox } from "./Combobox";
 
 interface TransactionFormProps {
     date: string,
@@ -166,7 +167,8 @@ export function TransactionForm(props: TransactionFormProps) {
                                     <transactionForm.Field name={`postings[${i}].account`}>
                                         {subField => (
                                             <div className="min-w-0 flex-1">
-                                                <Input
+                                                {/* <Input */}
+                                                <Combobox
                                                     value={subField.state.value}
                                                     onChange={e => subField.handleChange(e.target.value)}
                                                     className={`w-full ${checkChange(props.postings[i]?.account, subField.state.value)} ${checkValid(subField.state.value === "")}`}

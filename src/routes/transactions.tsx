@@ -35,7 +35,7 @@ function Transactions() {
                     isPending ? <div>Pending</div> : isError ? <div>{"Error: " + error.message}</div> :
                     Object.entries(data)?.map(([_, d]) => (
                             <div className="flex gap-2 h-[40px]">
-                                <TransactionLink key={d.id} link={`${d.id}`} text={d.description} />
+                                <TransactionLink key={d.id} link={`${d.id}`} text={`(${d.transaction_date}) ${d.description}`} />
                                 <ConfirmationButton
                                     className="h-[40px] w-[40px] box-border p-2 border-2 border-red-700 hover:bg-red-700 transition select-none flex items-center justify-center"
                                     onConfirm={() => {
