@@ -172,6 +172,7 @@ export function TransactionForm(props: TransactionFormProps) {
                                                     value={subField.state.value}
                                                     onChange={e => subField.handleChange(e.target.value)}
                                                     className={`w-full ${checkChange(props.postings[i]?.account, subField.state.value)} ${checkValid(subField.state.value === "")}`}
+                                                    updateValue={str => subField.handleChange(str)}
                                                 />
                                             </div>
                                         )}

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use database::{get_db_file, transactions::{delete, delete_posting, get_transaction_count, get_transaction_details, get_transactions_between, get_transactions_by_account, get_transactions_with_description, update}};
+use database::{get_db_file, transactions::{delete, delete_posting, get_accounts_by_string, get_transaction_count, get_transaction_details, get_transactions_between, get_transactions_by_account, get_transactions_with_description, update}};
 use rusqlite::Connection;
 use rust_decimal::Decimal;
 use time::{macros::date, Date, Month};
@@ -10,44 +10,51 @@ mod database;
 mod error;
 mod types;
 
+fn open_connection() -> Result<Connection, String> {
+    let conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
+    conn.pragma_update(None, "foreign_keys", &"ON").map_err(|e| e.to_string())?;
+    Ok(conn)
+}
+
 /// Gets a list of the most recent transactions
 #[tauri::command]
 fn get_all_transaction_list() -> Result<HashMap<i64,Transaction>, String> {
-    let conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
-    conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+    let conn = open_connection()?;
     get_transactions_between(&conn, date!{1970 - 1 - 1}, Date::MAX).map_err(|e| e.to_string())
 }
 
 /// Get a complete transaction
 #[tauri::command]
 fn get_transaction_by_id(id: i64) -> Result<Transaction, String> {
-    let conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
-    conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+    let conn = open_connection()?;
     get_transaction_details(&conn, id).map_err(|e| e.to_string())
 }
 
 /// Get list of transactions between given dates
 #[tauri::command]
 fn get_all_transactions_between(since: Option<Date>, until: Option<Date>) -> Result<HashMap<i64, Transaction>, String> {
-    let conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
-    conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+    let conn = open_connection()?;
     get_transactions_between(&conn, since.unwrap_or(date!{1970 - 1 - 1}), until.unwrap_or(Date::MAX)).map_err(|e| e.to_string())
 }
 
 // Get list of transactions with associated account
 #[tauri::command]
 fn get_transactions_involving_account(acct: String) -> Result<HashMap<i64, Transaction>, String> {
-    let conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
-    conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+    let conn = open_connection()?;
     get_transactions_by_account(&conn, &acct).map_err(|e| e.to_string())
 }
 
 // Get list of transactions with given string in description or posting comments
 #[tauri::command]
 fn get_transactions_by_text(text: String) -> Result<HashMap<i64, Transaction>, String> {
-    let conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
-    conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+    let conn = open_connection()?;
     get_transactions_with_description(&conn, &text).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn search_accounts (input_value: String) -> Result<Vec<String>, String> {
+    let conn = open_connection()?;
+    get_accounts_by_string(&conn, &input_value).map_err(|e| e.to_string())
 }
 
 #[tauri::command]
@@ -66,8 +73,7 @@ fn add_transaction(
     };
     if t.check() {
         println!("Balanced, adding to db");
-        let mut conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
-        conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+        let mut conn = open_connection()?;
         let tx = conn.transaction().map_err(|e| e.to_string())?;
         let result = match database::transactions::insert(&tx, t) {
             Ok(i) => Ok(i),
@@ -97,8 +103,7 @@ fn update_transaction(
         description: desc,
         postings,
     };
-    let mut conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
-    conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+    let mut conn = open_connection()?;
     let tx = conn.transaction().map_err(|e| e.to_string())?;
     update(&tx, t, delete_list).map_err(|e| e.to_string())?;
     tx.commit().map_err(|e| e.to_string())?;
@@ -107,8 +112,7 @@ fn update_transaction(
 
 #[tauri::command]
 fn delete_transaction(id: i64) -> Result<bool, String> {
-    let mut conn = Connection::open(get_db_file()).map_err(|e| e.to_string())?;
-    conn.pragma_update(None, "foreign_keys", "ON").map_err(|e| e.to_string())?;
+    let mut conn = open_connection()?;
     let tx = conn.transaction().map_err(|e| e.to_string())?;
     let output = match delete(&tx, id) {
         Ok(_) => Ok(true),
@@ -157,6 +161,7 @@ pub fn run() {
             get_transaction_by_id,
             get_all_transactions_between,
             get_transactions_involving_account,
+            search_accounts,
             add_transaction,
             update_transaction,
             delete_transaction,

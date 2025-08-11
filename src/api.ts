@@ -17,4 +17,5 @@ export let getTransactionDetails = generate_queryFn<TransactionData>('get_transa
 export let updateTransaction = generate_queryFn<boolean>('update_transaction');
 export let addTransaction = generate_queryFn<number>('add_transaction');
 export let delete_transaction = generate_queryFn<boolean>('delete_transaction');
+export let getAccountSuggestions = generate_queryFn<string[]>('search_accounts')
 

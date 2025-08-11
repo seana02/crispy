@@ -112,8 +112,8 @@ pub fn get_transactions_with_description(
         "SELECT DISTINCT transactions.id, transaction_date, description FROM transactions
         LEFT JOIN postings
         ON postings.transaction_id = transactions.id
-        WHERE postings.comment LIKE \"%:text%\"
-        OR transactions.description LIKE \":text\"",
+        WHERE postings.comment LIKE %:text%
+        OR transactions.description LIKE :text",
     );
     let mut stmt = conn.prepare(&str)?;
 
@@ -135,6 +135,24 @@ pub fn get_transactions_with_description(
         );
     }
     Ok(ts)
+}
+
+/// Gets list of accounts based on input string
+pub fn get_accounts_by_string(conn: &rusqlite::Connection, search_string: &str) -> Result<Vec<String>,  Error> {
+    let mut stmt = conn.prepare(
+        "SELECT DISTINCT account FROM postings
+        WHERE account LIKE :text
+        ORDER BY account"
+    )?;
+    let mut rows = stmt.query(named_params! {
+        ":text": format!("%{}%", search_string),
+    })?;
+
+    let mut result: Vec<String> = Vec::new();
+    while let Some(row) = rows.next()? {
+        result.push(row.get::<usize, String>(0).unwrap());
+    }
+    Ok(result)
 }
 
 /// Adds a complete transaction to the database
@@ -247,19 +265,6 @@ pub fn delete(tx: &rusqlite::Transaction, id: i64) -> Result<(), Error> {
     )?;
     Ok(())
 }
-
-/// Deletes a transaction by id and all associated postings
-// fn delete_transaction(tx: &rusqlite::Transaction, id: i64) -> Result<(), Error> {
-//     // SQLite enforces posting deletions
-//     tx.execute(
-//         "DELETE FROM transactions WHERE id=:id;",
-//         named_params! {
-//             ":id": id
-//         },
-//     )?;
-//
-//     Ok(())
-// }
 
 /// Deletes a posting by transaction id and posting id
 pub fn delete_posting(tx: &rusqlite::Transaction, t_id: i64, id: i64) -> Result<(), Error> {

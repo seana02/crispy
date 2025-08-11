@@ -15,6 +15,7 @@ get_transaction_by_id                               get complete information abo
 get_transactions_between                            get a list of transactions with no posting information between the given dates
 get_transactions_involving_accounts                 get a list of transactions with no posting information involving the given account
 get_transactions_with_description                   get a list of transactions with no posting information containing a text string in the description or comments
-create_transaction                                  insert transaction+postings by id
+search_accounts                                     get a list of accounts containing given string
+add_transaction                                     insert transaction+postings by id
 delete_transaction                                  delete transaction+postings by id
 update_transaction                                  update transaction+postings by id

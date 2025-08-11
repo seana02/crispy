@@ -1,3 +1,5 @@
+import { getAccountSuggestions } from '@/api';
+import { useQuery } from '@tanstack/react-query';
 import { useCombobox } from 'downshift';
 import { useEffect, useRef, useState } from 'react';
 
@@ -9,43 +11,50 @@ interface ComboboxProps {
     className?: string,
     value?: string,
     onChange: (e: React.ChangeEvent<HTMLInputElement>) => void,
+    updateValue: (str: string) => void,
     onClick?:  (e: React.MouseEvent<HTMLInputElement>) => void,
     onBlur?: () => void,
 }
 
-const sampleData = [
-    "a",
-    "aa",
-    "aaa",
-    "b",
-    "c",
-    "d"
-];
+const pendingMessage = 'Pending...';
+const errorMessage = 'Error loading suggestions';
 
 export function Combobox(props: ComboboxProps) {
     const inputRef = useRef<HTMLInputElement | null>(null);
     const [offset, setOffset] = useState<{ left: number, width: number }>({ left: 0, width: 0 });
-    const [items, setItems] = useState<string[]>([])
+    const [items, setItems] = useState<string[]>([]);
+
     const { isOpen,
-        getToggleButtonProps,
-        getLabelProps,
+        inputValue,
         getMenuProps,
         getInputProps,
         highlightedIndex,
         getItemProps,
         selectedItem
     } = useCombobox({
-        onInputValueChange({ inputValue }) {
-             setItems(sampleData.filter(i => !inputValue || i.includes(inputValue.toLowerCase())))
+        onSelectedItemChange: ({ selectedItem }) => {
+            if (selectedItem) {
+                props.updateValue(selectedItem);
+            }
         },
         items,
     });
+
+    const { isPending, isError, data, error } = useQuery<string[]>({
+        queryKey: ['accounts', inputValue],
+        queryFn: () => getAccountSuggestions({ inputValue }),
+    });
+
+    useEffect(() => {
+        if (isPending) { if (items.length === 0) setItems(['Pending...']) }
+        else if (isError) setItems([`Error: ${error}`]);
+        else setItems(data);
+    }, [data, isPending, isError]);
 
     useEffect(() => {
         function updateBox() {
             if (inputRef.current) {
                 const rect = inputRef.current.getBoundingClientRect();
-                console.log(rect);
                 setOffset({
                     left: rect.left,
                     width: rect.width,
@@ -64,12 +73,13 @@ export function Combobox(props: ComboboxProps) {
                 name={props.name || ""}
                 placeholder={props.placeholder || ""}
                 className={`w-full border-0 border-b-2 border-blue-200 focus:border-blue-400 focus:outline-none focus:shadow-none`}
-                onChange={props.onChange}
                 onBlur={props.onBlur}
                 {...getInputProps({
                     id: props.id || "",
                     onClick: props.onClick,
-                    ref: node => {inputRef.current = node;}
+                    ref: node => {inputRef.current = node;},
+                    value: props.value,
+                    onChange: props.onChange
                 })}
             />
             <ul
@@ -77,11 +87,18 @@ export function Combobox(props: ComboboxProps) {
                 style={{ width: `${offset.width}px`, left:`${offset.left}px` }}
                 {...getMenuProps()}
             >
-                {isOpen && items.map((item, index) => (
+                {isOpen && items.map((item, index) => (item == pendingMessage || item.startsWith(errorMessage)) ? (
+                    <li key={index} className='py-2 px-3 select-none flex'>
+                        {item}
+                    </li>
+                ) : (
                     <li
                         key={index}
                         className={`${highlightedIndex === index && 'bg-blue-300'} ${selectedItem === item && 'font-bold'} py-2 px-3 shadow-sm flex flex-col select-none hover:cursor-pointer hover:bg-gray-800`}
-                        {...getItemProps({item, index})}
+                        {...getItemProps({
+                            item,
+                            index,
+                        })}
                     >
                         {item}
                     </li>
