@@ -45,6 +45,7 @@ export function TransactionForm(props: TransactionFormProps) {
                 if (!value.date) return 'Enter a valid date';
                 if (!value.description) return 'Enter a valid description';
                 let sum = currency(0);
+                if (value.postings.length <= 0) return 'Must have at least 1 posting';
                 for (let a of value.postings) {
                     if (!a.account) return 'All Postings must have a valid account';
                     if (!a.value || isNaN(+a.value)) return 'All Postings must have a valid value';
@@ -86,7 +87,7 @@ export function TransactionForm(props: TransactionFormProps) {
     return (
         <div className="flex flex-col h-full overflow-y-scroll p-10 text-xl">
             <div
-                className={`bg-[rgba(0,0,0,0.3)] w-screen h-screen absolute top-0 left-0 ${isDialogOpen ? '' : 'hidden'}`}
+                className={`bg-[rgba(0,0,0,0.3)] w-screen h-screen absolute top-0 left-0 z-10 ${isDialogOpen ? '' : 'hidden'}`}
                 onClick={() => setIsDialogOpen(!isDialogOpen)}
             />
             <form className="flex flex-col max-h-full" onSubmit={e => {
@@ -100,14 +101,14 @@ export function TransactionForm(props: TransactionFormProps) {
                                 <div className={`relative ${checkChange(props.date, field.state.value)}`}>
                                     <div
                                         // onClose={() => setIsDialogOpen(false)}
-                                        className={`absolute top-[100%] bg-black border border-blue-400 rounded-lg p-2 ${isDialogOpen ? '' : 'hidden'}`}
+                                        className={`absolute top-[100%] bg-black border border-blue-400 rounded-lg p-2 z-20 ${isDialogOpen ? '' : 'hidden'}`}
                                     >
                                         <DayPicker
                                             month={month}
                                             onMonthChange={setMonth}
                                             autoFocus
                                             mode="single"
-                                            timeZone="UTC"
+                                            timeZone="America/New_York"
                                             selected={new Date(`${field.state.value}T00:00:00Z`)}
                                             onSelect={d => field.handleChange(d.toISOString().substring(0, 10))}
                                             classNames={{
@@ -171,7 +172,7 @@ export function TransactionForm(props: TransactionFormProps) {
                                                 <Combobox
                                                     value={subField.state.value}
                                                     onChange={e => subField.handleChange(e.target.value)}
-                                                    className={`w-full ${checkChange(props.postings[i]?.account, subField.state.value)} ${checkValid(subField.state.value === "")}`}
+                                                    className={`w-full z-0 ${checkChange(props.postings[i]?.account, subField.state.value)} ${checkValid(subField.state.value === "")}`}
                                                     updateValue={str => subField.handleChange(str)}
                                                 />
                                             </div>
