@@ -109,7 +109,7 @@ export function TransactionForm(props: TransactionFormProps) {
                                             autoFocus
                                             mode="single"
                                             timeZone="America/New_York"
-                                            selected={new Date(`${field.state.value}T00:00:00Z`)}
+                                            selected={new Date(`${field.state.value}T00:00:00-04:00`)}
                                             onSelect={d => field.handleChange(d.toISOString().substring(0, 10))}
                                             classNames={{
                                                 today: 'text-green-200',
@@ -172,7 +172,7 @@ export function TransactionForm(props: TransactionFormProps) {
                                                 <Combobox
                                                     value={subField.state.value}
                                                     onChange={e => subField.handleChange(e.target.value)}
-                                                    className={`w-full z-0 ${checkChange(props.postings[i]?.account, subField.state.value)} ${checkValid(subField.state.value === "")}`}
+                                                    className={`w-full ${checkChange(props.postings[i]?.account, subField.state.value)} ${checkValid(subField.state.value === "")}`}
                                                     updateValue={str => subField.handleChange(str)}
                                                 />
                                             </div>

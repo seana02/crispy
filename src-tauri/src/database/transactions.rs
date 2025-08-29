@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
 use rusqlite::{named_params, Connection, Error};
+use rust_decimal::Decimal;
+use std::str::FromStr;
 use time::{macros::format_description, Date};
 
 use crate::{
@@ -153,6 +155,28 @@ pub fn get_accounts_by_string(conn: &rusqlite::Connection, search_string: &str) 
         result.push(row.get::<usize, String>(0).unwrap());
     }
     Ok(result)
+}
+
+pub fn get_total_by_account(conn: &rusqlite::Connection, acct: &str) -> Result<Vec<(String, Vec<(String, Decimal)>)>, TransactionError> {
+    let mut stmt = conn.prepare(
+        "SELECT account, CAST(value AS TEXT), currency FROM postings
+        WHERE account LIKE :text"
+    )?;
+
+    let mut rows = stmt.query(named_params! {
+        ":text": format!("%{}%", acct),
+    })?;
+
+    let mut map: HashMap<String, HashMap<String, Decimal>> = HashMap::new();
+    while let Some(row) = rows.next()? {
+        let account = row.get::<usize, String>(0).unwrap();
+        let value_str = row.get::<usize, String>(1).unwrap();
+        let ccy = row.get::<usize, String>(2).unwrap();
+        let value = Decimal::from_str(&value_str).expect("Invalid decimal");
+        let counts = map.entry(account).or_insert(HashMap::new());
+        *counts.entry(ccy).or_insert(Decimal::ZERO) += value;
+    }
+    Ok(map.into_iter().map(|(k, v)| (k, v.into_iter().map(|(k2, v2)| (k2, v2)).collect())).collect())
 }
 
 /// Adds a complete transaction to the database
@@ -366,13 +390,6 @@ fn update_posting(
     )?;
 
     Ok(())
-}
-
-/// Gets the count of transactions
-pub fn get_transaction_count() -> Result<i32, Error> {
-    let conn = Connection::open(get_db_file())?;
-    conn.pragma_update(None, "foreign_keys", "ON")?;
-    conn.query_row("SELECT COUNT() FROM transactions", [], |row| row.get(0))
 }
 
 /// Gets a vector of postings based on transaction id

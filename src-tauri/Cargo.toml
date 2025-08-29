@@ -23,7 +23,7 @@ rusqlite = "0.32.1"
 dirs = "5.0.1"
 time = { version = "0.3.36", features = ["serde"] }
 time-tz = "2.0.0"
-rust_decimal = "1.36.0"
+rust_decimal = { version ="1.36.0", features = ["serde"] }
 
 [features]
 default = ["rusqlite/time"]

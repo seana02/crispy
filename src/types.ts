@@ -13,3 +13,14 @@ export interface PostingData {
     comment: string,
 };
 
+export interface AccountTree {
+    label: string,
+    total_currency: Wallet[],
+    sub_accounts: AccountTree[] | undefined,
+}[]
+
+export interface Wallet {
+    ccy: string,
+    total_value: string,
+}
+

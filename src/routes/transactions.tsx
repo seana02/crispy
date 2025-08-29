@@ -25,7 +25,7 @@ function Transactions() {
     });
 
     return (
-        <div className='h-full flex flex-1 bg-black text-white'>
+        <>
             <div className='min-w-1/4 w-1/4 border-r-2 border-gray-600 box-border flex flex-col p-4 gap-2 overflow-y-scroll'>
                 <div className="flex gap-2">
                     <TransactionLink link={'/transactions'} text={'Return'} />
@@ -51,14 +51,14 @@ function Transactions() {
                 }
             </div>
             <div className='h-full flex-1'><Outlet /></div>
-        </div>
+        </>
     );
 }
 
 function TransactionLink({ text, link, className }: { text: string, link: string, className?: string }) {
     return (
         <Link to={link}
-            className={`p-4 flex items-center transition border-2 border-gray-700 hover:bg-gray-700 flex-1 select-none overflow-hidden  whitespace-nowrap ${className}`}
+            className={`p-4 flex items-center transition border-2 border-gray-700 hover:bg-gray-700 flex-1 select-none overflow-hidden whitespace-nowrap ${className}`}
             activeOptions={{ exact: true, includeSearch: false }}
             activeProps={{ className: 'bg-gray-800' }}
         >

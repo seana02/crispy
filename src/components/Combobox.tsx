@@ -25,13 +25,13 @@ export function Combobox(props: ComboboxProps) {
     const [items, setItems] = useState<string[]>([]);
 
     const { isOpen,
-        inputValue,
         getMenuProps,
         getInputProps,
         highlightedIndex,
         getItemProps,
         selectedItem
     } = useCombobox({
+        inputValue: props.value,
         onSelectedItemChange: ({ selectedItem }) => {
             if (selectedItem) {
                 props.updateValue(selectedItem);
@@ -41,8 +41,8 @@ export function Combobox(props: ComboboxProps) {
     });
 
     const { isPending, isError, data, error } = useQuery<string[]>({
-        queryKey: ['accounts', inputValue],
-        queryFn: () => getAccountSuggestions({ inputValue }),
+        queryKey: ['accounts', props.value],
+        queryFn: () => getAccountSuggestions({ inputValue: props.value }),
     });
 
     useEffect(() => {
@@ -83,7 +83,7 @@ export function Combobox(props: ComboboxProps) {
                 })}
             />
             <ul
-                className={`fixed bg-black mt-1 max-h-80 overflow-scroll p-0 z-10 border-2 border-green-200 border-t-0 ${(isOpen && items.length) ? '' : 'hidden'}`}
+                className={`fixed bg-black mt-1 max-h-80 overflow-scroll p-0 z-20 border-2 border-green-200 border-t-0 ${(isOpen && items.length) ? '' : 'hidden'}`}
                 style={{ width: `${offset.width}px`, left:`${offset.left}px` }}
                 {...getMenuProps()}
             >
