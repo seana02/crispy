@@ -1,5 +1,5 @@
 use std::str::FromStr;
-use rust_decimal::Decimal;
+use rust_decimal::{prelude::Zero, Decimal};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -90,6 +90,7 @@ pub fn build_tree(data: Vec<(&str, Vec<(&str, Decimal)>)>) -> AccountNode {
         }
 
         for (currency, value) in wallet {
+            //if value == Decimal::ZERO { continue; }
             root_node.insert(&parts, value, currency);
         }
     }

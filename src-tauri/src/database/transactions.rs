@@ -157,6 +157,7 @@ pub fn get_accounts_by_string(conn: &rusqlite::Connection, search_string: &str) 
     Ok(result)
 }
 
+/// Gets list by specified account
 pub fn get_total_by_account(conn: &rusqlite::Connection, acct: &str) -> Result<Vec<(String, Vec<(String, Decimal)>)>, TransactionError> {
     let mut stmt = conn.prepare(
         "SELECT account, CAST(value AS TEXT), currency FROM postings
