@@ -104,6 +104,7 @@ fn get_balance_sheet() -> Result<AccountNode, String> {
     let mut assets = get_total_by_account(&conn, "Assets").map_err(|e| e.to_string())?;
     assets.sort_by(|a,b| a.0.cmp(&b.0));
     let mut liabilities = get_total_by_account(&conn, "Liabilities").map_err(|e| e.to_string())?;
+    liabilities = liabilities.into_iter().map(|(s, v)| (s, v.into_iter().map(|(a, b)| (a, -b)).collect())).collect();
     liabilities.sort_by(|a,b| a.0.cmp(&b.0));
     let all: Vec<(&str, Vec<(&str, Decimal)>)> = assets.iter().chain(liabilities.iter()).map(|(a, b)| (a.as_str(), b.iter().map(|(c,d)| (c.as_str(), *d)).collect())).collect();
     Ok(build_tree(all))
