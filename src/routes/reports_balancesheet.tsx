@@ -44,7 +44,6 @@ function BalanceSheet() {
             <table className="w-full border text-xl font-mono">
                 <tbody className="divide-y">
                     {converted.map((d, i) => {
-                        if (i == 0) return <></>;
                         return Row(d, i, toggleFold);
                     })}
                 </tbody>
@@ -83,10 +82,10 @@ function Row(data: AccountRow, key: number, toggleFold: (path: string) => void) 
     return (
         <tr className={trClass} key={key}>
             <td className="w-[30px] text-center select-none" onClick={() => (data.status == RowStatus.Open || data.status == RowStatus.Closed) ? toggleFold(data.fullpath) : {}}>
-                {data.status == RowStatus.Open ? "˅" : data.status == RowStatus.Closed ? "˃"  : ""}
+                {data.status == RowStatus.Open ? "˅" : data.status == RowStatus.Closed ? "˃" : ""}
             </td>
-            <td className="whitespace-pre p-2 w-1/2" style={{ paddingLeft: `${data.indents*2+1}em` }}>
-                {data.label + (data.status == RowStatus.Closed ? "..."  : "")}
+            <td className="whitespace-pre p-2 w-1/2" style={{ paddingLeft: `${data.indents * 2 + 1}em` }}>
+                {data.label + (data.status == RowStatus.Closed ? "..." : "")}
             </td>
             <td className="text-right p-2">{data.totalString}</td>
         </tr>
@@ -95,31 +94,38 @@ function Row(data: AccountRow, key: number, toggleFold: (path: string) => void) 
 
 function convertDataToRows(data: AccountTree, folded: Set<string>) {
     let rows: AccountRow[] = [];
-    data.label = '';
-    addRows(data, '', -1, false);
+    data.sub_accounts?.forEach(r => addRows(r, '', 0, false));
     return rows;
 
     function addRows(data: AccountTree, prefix: string, indents: number, hidden: boolean) {
         if (!data) return;
-        rows.push({
-            fullpath: prefix + data.label,
-            label: data.label,
-            totalString: formatCurrency(data.total_currency),
-            indents,
-            status: hidden ? RowStatus.Hidden :
-                data.sub_accounts?.length == 0 ? RowStatus.NoFold :
-                folded.has(prefix + data.label) ? RowStatus.Closed :
-                RowStatus.Open
-        });
-        data.sub_accounts?.forEach(sub => addRows(sub, prefix+data.label+':', indents+1, hidden || folded.has(prefix + data.label)));
+        if (data.sub_accounts?.length == 1) {
+            addRows({
+                label: data.label + ":" + data.sub_accounts[0].label,
+                total_currency: data.total_currency,
+                sub_accounts: data.sub_accounts[0].sub_accounts
+            }, prefix, indents, hidden);
+        } else {
+            rows.push({
+                fullpath: prefix + data.label,
+                label: data.label,
+                totalString: formatCurrency(data.total_currency),
+                indents,
+                status: hidden ? RowStatus.Hidden :
+                    data.sub_accounts?.length == 0 ? RowStatus.NoFold :
+                        folded.has(prefix + data.label) ? RowStatus.Closed :
+                            RowStatus.Open
+            });
+            data.sub_accounts?.forEach(sub => addRows(sub, prefix + data.label + ':', indents + 1, hidden || folded.has(prefix + data.label)));
+        }
     }
 }
 
 function formatCurrency(w: Wallet[]) {
     let output = "";
-    w.forEach((c,i) => {
+    w.forEach((c, i) => {
         if (i > 0) output += ", ";
-        switch(c.ccy) {
+        switch (c.ccy) {
             case "USD": output += `$${c.total_value}`; break;
             case "JPY": output += `¥${c.total_value}`; break;
             default: output += `${c.total_value} ${c.ccy}`; break;
