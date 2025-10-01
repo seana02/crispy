@@ -8,6 +8,8 @@ import currency from "currency.js";
 import { ConfirmationButton } from "./ConfirmationButton";
 import { MdDelete, MdDeleteForever } from "react-icons/md";
 import { Combobox } from "./Combobox";
+import { useNavigate } from "@tanstack/react-router";
+import { getTodayDatestring } from "@/routes/transactions_add";
 
 interface TransactionFormProps {
     date: string,
@@ -20,9 +22,11 @@ interface TransactionFormProps {
         comment: string,
     }[],
     onSubmit: (year: number, month: number, day: number, postings: PostingData[], desc: string, delete_list: number[]) => void,
+    duplicated?: boolean
 }
 
 export function TransactionForm(props: TransactionFormProps) {
+    const navigate = useNavigate();
     const transactionForm = useForm({
         defaultValues: {
             date: props.date,
@@ -98,7 +102,7 @@ export function TransactionForm(props: TransactionFormProps) {
                     <transactionForm.Field name="date">
                         {field => {
                             return (
-                                <div className={`relative ${checkChange(props.date, field.state.value)}`}>
+                                <div className={`relative ${checkChange(props.duplicated ? getTodayDatestring() : props.date, field.state.value)}`}>
                                     <div
                                         // onClose={() => setIsDialogOpen(false)}
                                         className={`absolute top-[100%] bg-black border border-blue-400 rounded-lg p-2 z-20 ${isDialogOpen ? '' : 'hidden'}`}
@@ -138,7 +142,7 @@ export function TransactionForm(props: TransactionFormProps) {
                     </transactionForm.Field>
                     <transactionForm.Field name="description" >
                         {field => (
-                            <div className={`flex-1 flex ${checkChange(props.description, field.state.value)}`}>
+                            <div className={`flex-1 flex ${checkChange(props.duplicated ? '' : props.description, field.state.value)}`}>
                                 <Input
                                     type="text"
                                     id="description"
@@ -151,6 +155,12 @@ export function TransactionForm(props: TransactionFormProps) {
                             </div>
                         )}
                     </transactionForm.Field>
+                    {
+                        props.description === "" || props.duplicated ? <></> :
+                        <button className="border rounded-md border-yellow-200 hover:border-yellow-400 px-1 text-center flex items-center justify-center" onClick={duplicateEntry}>
+                            Duplicate
+                        </button>
+                    }
                 </div>
                 <transactionForm.Field name="postings" mode="array">
                     {field => (
@@ -163,7 +173,7 @@ export function TransactionForm(props: TransactionFormProps) {
                                 <div className="w-[30px] text-center">X</div>
                             </div>
                             {field.state.value.map((_, i) => (
-                                <div key={i} className={`flex gap-3 my-3 ${props.postings[i] ? '' : 'bg-gray-700'}`}>
+                                <div key={i} className={`flex gap-3 my-3 ${props.duplicated ? 'bg-gray-700' : props.postings[i] ? '' : 'bg-gray-700'}`}>
                                     <div className="w-8 text-right select-none">{i+1}</div>
                                     <transactionForm.Field name={`postings[${i}].account`}>
                                         {subField => (
@@ -254,14 +264,28 @@ export function TransactionForm(props: TransactionFormProps) {
     );
 
     function checkChange<T>(oldVal: T, newVal: T) {
-        if (!oldVal || !newVal) return '';
         if (oldVal !== newVal) return 'bg-gray-700';
+        if (!oldVal || !newVal) return '';
         return '';
     }
 
     function checkValid(check: boolean) {
         if (check) return 'border-red-200 hoover:border-red-400';
         return '';
+    }
+
+    function duplicateEntry() {
+        console.log('hi');
+
+        navigate({
+            to: '../add',
+            search: {
+                date: props.date,
+                description: props.description,
+                postings: JSON.stringify(props.postings),
+                duplicated: true
+            }
+        });
     }
 }
 
