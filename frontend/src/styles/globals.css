@@ -1,0 +1,23 @@
+* {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+button {
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+button:hover {
+  background: var(--color-primary-light);
+}
+
+.svg-small {
+  height: 16px;
+  width: 16px;
+}

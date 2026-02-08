@@ -1,0 +1,14 @@
+- style Transactions rows
+- list Postings for each Transaction
+- add edit/delete buttons to Transactions page
+- implement editing Transactions
+- implement confirmation popup modal
+- implement deleting Transactions
+- style Accounts page rows
+- add edit/delete buttons to Accounts page
+- implement editing Accounts
+- implement deleting Accounts
+
+- implement Transaction tagging
+- add filter options in Transaction page
+- add filter options in Accounts page

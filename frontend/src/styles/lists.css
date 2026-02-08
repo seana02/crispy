@@ -1,0 +1,52 @@
+#transactions-page,
+#accounts-page {
+  box-sizing: border-box;
+  height: 100%;
+  width: 100%;
+}
+
+.filter-menu {
+  box-sizing: border-box;
+  background-color: var(--color-surface);
+  height: 15%;
+  margin-bottom: 0.75rem;
+  padding: 0.6rem;
+}
+
+.list-row {
+  background-color: var(--color-surface);
+  margin: 0.6rem 0rem;
+  padding: 0.2rem 0.4rem;
+}
+
+.list-row {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.list-row-status {
+  margin-left: auto;
+  font-style: italic;
+  font-weight: lighter;
+}
+
+.list-row-button {
+  padding: 0.1rem 0.2rem;
+}
+
+.list-row-edit {
+  background-color: var(--color-accent-warn);
+  color: var(--color-surface);
+}
+
+.list-row-edit:hover {
+  background-color: var(--color-accent-warn-light);
+}
+
+.list-row-delete {
+  background-color: var(--color-accent-error)
+}
+
+.list-row-delete:hover {
+  background-color: var(--color-accent-error-light);
+}

@@ -1,0 +1,121 @@
+.new-item-form {
+  background-color: var(--color-surface);
+  color: var(--color-text-primary);
+  padding: 1.5rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.form-title {
+  margin: 0;
+  font-size: 1.25rem;
+  color: var(--color-text-primary);
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.form-group-group,
+.form-posting-row {
+  display: flex;
+  gap: 0.8rem;
+}
+
+.form-group-group .right {
+  display: flex;
+  gap: 0.8rem;
+  margin-left: auto;
+}
+
+.form-group.grow {
+  flex-grow: 1;
+}
+
+label {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+input,
+select,
+.checkmark-visual {
+  background-color: var(--color-surface-2);
+  color: var(--color-text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+  font-size: 0.95rem;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+  height: 100%;
+}
+
+.checkmark-visual {
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+svg {
+  display: block;
+  height: 28px;
+  margin: 0;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+}
+
+.select-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.select-wrapper::after {
+  content: "▼";
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-primary);
+  pointer-events: none;
+}
+
+.select-wrapper select {
+  padding: 0.5rem 1.75rem 0.5rem 0.5rem;
+}
+
+.form-error {
+  color: var(--color-accent-error);
+  font-size: 0.875rem;
+}
+
+.submit-btn,
+.add-posting-btn {
+  background-color: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.6rem 1rem;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background var(--transition-fast);
+}
+
+.submit-btn:hover,
+.add-posting-btn:hover {
+  background-color: var(--color-secondary);
+}
+
+.posting-account-input {
+  flex-grow: 1;
+}

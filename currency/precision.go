@@ -1,0 +1,43 @@
+package currency
+
+func PrecisionFor(currency string) int32 {
+	currencyMap := map[string]int32{
+		"USD": 2,
+		"EUR": 2,
+		"JPY": 0,
+		"GBP": 2,
+		"CNY": 2,
+		"AUD": 2,
+		"CAD": 2,
+		"CHF": 2,
+		"HKD": 2,
+		"SGD": 2,
+		"SEK": 2,
+		"KRW": 0,
+		"NOK": 2,
+		"NZD": 2,
+		"INR": 2,
+		"MXN": 2,
+		"TWD": 2,
+		"ZAR": 2,
+		"BRL": 2,
+		"DKK": 2,
+		"PLN": 2,
+		"THB": 2,
+		"ILS": 2,
+		"IDR": 2,
+		"CZK": 2,
+		"AED": 2,
+		"TRY": 2,
+		"HUF": 2,
+		"CLP": 0,
+		"SAR": 2,
+		"PHP": 2,
+		"MYR": 2,
+		"COP": 2,
+		"RUB": 2,
+		"RON": 2,
+		"PEN": 2,
+	}
+	return currencyMap[currency]
+}

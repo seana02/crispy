@@ -1,0 +1,47 @@
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: var(--color-surface);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.topbar-search {
+  background: var(--color-bg);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--color-text-primary);
+  padding: 0.4rem 0.75rem;
+  border-radius: var(--radius-sm);
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+}
+
+.topbar-right button {
+  margin-left: 0.75rem;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.topbar-right button:hover {
+  background: var(--color-secondary);
+}
+
+.topbar-left {
+  display: flex;
+  align-items: center;
+}
+
+.title {
+  margin-right: 0.75rem;
+  font-size: x-large;
+  color: var(--color-text-primary);
+}

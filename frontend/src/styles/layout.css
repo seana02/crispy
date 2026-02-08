@@ -1,0 +1,26 @@
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+}
+
+.app-layout {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.main-content {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background-color: var(--color-bg);
+}
+
+.page-content {
+  flex: 1;
+  padding: 1.5rem;
+  background-color: var(--color-bg);
+  overflow-y: auto;
+}
