@@ -74,7 +74,7 @@ func (t *TransactionDTO) ToDomain() (*Transaction, error) {
 		updated.Local(),
 		postings,
 		t.Tags,
-	)
+	), nil
 }
 
 func (t *Transaction) ToDTO() *TransactionDTO {
@@ -105,7 +105,7 @@ func NewTransaction(
 	dateUpdated time.Time,
 	postings []*Posting,
 	tags []string,
-) (*Transaction, error) {
+) *Transaction {
 	tx := &Transaction{
 		id,
 		description,
@@ -117,10 +117,7 @@ func NewTransaction(
 		postings,
 		tags,
 	}
-	if err := tx.Validate(); err != nil {
-		return nil, err
-	}
-	return tx, nil
+	return tx
 }
 
 func (t *TransactionDTO) String() string {

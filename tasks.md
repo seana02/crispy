@@ -1,7 +1,4 @@
-- style Transactions rows
 - list Postings for each Transaction
-- add edit/delete buttons to Transactions page
-- implement editing Transactions
 - implement confirmation popup modal
 - implement deleting Transactions
 - style Accounts page rows

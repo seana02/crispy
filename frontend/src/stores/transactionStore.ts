@@ -72,5 +72,17 @@ const submitEditTransaction = async (
 
 const getTransactionById = (id: number) => txList.find(i => i.id === id);
 
-export { txList, submitNewTransaction, submitEditTransaction, getTransactionById, refetch };
+const deleteTransactionById = (id: number) => {
+    console.log("Deleting", id);
+    refetch();
+}
+
+export {
+    txList,
+    submitNewTransaction,
+    submitEditTransaction,
+    getTransactionById,
+    deleteTransactionById,
+    refetch,
+};
 

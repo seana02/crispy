@@ -44,9 +44,32 @@
 }
 
 .list-row-delete {
-  background-color: var(--color-accent-error)
+  background-color: var(--color-accent-error);
+  color: var(--color-surface);
 }
 
 .list-row-delete:hover {
+  background-color: var(--color-accent-error-light);
+}
+
+.popup-text {
+  text-align: center;
+}
+
+.popup-button-wrapper {
+  margin-top: auto;
+  display: flex;
+  gap: 10px;
+}
+
+.popup-button-wrapper button {
+  flex: 1;
+}
+
+.popup-delete {
+  background-color: var(--color-accent-error);
+}
+
+.popup-delete:hover {
   background-color: var(--color-accent-error-light);
 }

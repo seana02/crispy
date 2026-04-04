@@ -160,7 +160,7 @@ func (s *SQLiteDB) GetTransactionById(ctx context.Context, id int64) (*domain.Tr
 	}
 	return domain.NewTransaction(
 		id, description, date, status, referenceID, dateCreated, dateUpdated, postings, tags,
-	)
+	), nil
 }
 
 func (s *SQLiteDB) GetTransactionByTag(ctx context.Context, tagID int64) ([]*domain.Transaction, error) {
@@ -189,12 +189,9 @@ func (s *SQLiteDB) GetTransactionByTag(ctx context.Context, tagID int64) ([]*dom
 		if err != nil {
 			return nil, fmt.Errorf("%s getting tags: %s", funcError, err)
 		}
-		newTx, err := domain.NewTransaction(
+		newTx := domain.NewTransaction(
 			id, description, date, status, referenceID, dateCreated, dateUpdated, postings, tags,
 		)
-		if err != nil {
-			return nil, fmt.Errorf("%s creating transaction object: %s", funcError, err)
-		}
 		ts = append(ts, newTx)
 	}
 
@@ -228,12 +225,9 @@ func (s *SQLiteDB) GetTransactionByDate(ctx context.Context, from time.Time, to 
 		if err != nil {
 			return nil, fmt.Errorf("%s getting tags: %s", funcError, err)
 		}
-		newTx, err := domain.NewTransaction(
+		newTx := domain.NewTransaction(
 			id, description, date, status, referenceID, dateCreated, dateUpdated, postings, tags,
 		)
-		if err != nil {
-			return nil, fmt.Errorf("%s creating transaction object: %s", funcError, err)
-		}
 		ts = append(ts, newTx)
 	}
 
@@ -245,8 +239,6 @@ func (s *SQLiteDB) UpdateTransaction(ctx context.Context, t *domain.Transaction)
 	if s.tx == nil {
 		return -1, fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
 	}
-
-	fmt.Println("%v\n", t)
 
 	now := time.Now().Local().Truncate(time.Second)
 	_, err := s.tx.ExecContext(ctx, "UPDATE \"Transaction\" SET description = ?, date = ?, status = ?, date_updated = ? WHERE id = ?",

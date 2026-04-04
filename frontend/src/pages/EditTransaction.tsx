@@ -1,26 +1,15 @@
-import { createEffect, createMemo, createResource, createSignal, ErrorBoundary, For, Suspense } from "solid-js";
+import { createMemo, createResource, ErrorBoundary, Suspense } from "solid-js";
 import "../styles/newItem.css";
-import { createStore } from "solid-js/store";
 import { submitEditTransaction, getTransactionById } from "../stores/transactionStore";
 import { domain } from "../../wailsjs/go/models";
-import { useNavigate, useParams } from "@solidjs/router";
+import { useParams } from "@solidjs/router";
 import TransactionForm from "src/components/TransactionForm";
-import { CurrencyIcon } from "lucide-solid";
-import { UpdateTransaction } from "wailsjs/go/main/App";
 
-interface EditTransactionProps {
-    reference?: string
-    dateCreated?: string
-    dateUpdated?: string
-}
-
-export default function EditTransaction(props: EditTransactionProps) {
+export default function EditTransaction() {
     const params = useParams();
-    const navigate = useNavigate();
 
     const id = +params.id;
 
-    const source = createMemo(() => getTransactionById(id));
 
     const [tx] = createResource(() => id, () => getTransactionById(id));
 
