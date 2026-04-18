@@ -2,83 +2,143 @@ package service
 
 import (
 	"context"
+	"crispy/db"
 	"crispy/domain"
 	"fmt"
+	"strconv"
 	"time"
 )
 
-func (s *Service) CreateTransaction(ctx context.Context, newTransaction *domain.Transaction) (*domain.Transaction, error) {
+func (s *Service) CreateTransaction(ctx context.Context, newTransaction *domain.Transaction) error {
+	const errorMsg = "CreateTransaction failed: %w"
 	if err := newTransaction.Validate(); err != nil {
-		return nil, err
+		return fmt.Errorf(errorMsg, err)
 	}
-	err := s.repo.BeginTx(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("Error starting tx in CreateTransaction:\n%s", err)
+	if err := s.repo.BeginTx(ctx); err != nil {
+		return fmt.Errorf(errorMsg, err)
 	}
-	lastID, err := s.repo.CreateTransaction(ctx, newTransaction)
+	lastId, err := s.repo.TransactionQueryBuilder().
+		AddColumns([]db.Column{
+			db.Column_Description,
+			db.Column_Date,
+			db.Column_Status,
+			db.Column_DateCreated,
+			db.Column_DateUpdated,
+		}).
+		Insert(ctx, newTransaction.Description(), newTransaction.Date(), newTransaction.Status(), now(), now())
 	if err != nil {
 		s.repo.Rollback()
-		return nil, fmt.Errorf("Error creating transaction:\n%s", err)
+		return fmt.Errorf(errorMsg, err)
 	}
 	for _, p := range newTransaction.Postings() {
-		p.SetTransactionID(lastID)
-		_, err := s.repo.CreatePosting(ctx, p)
+		_, err := s.repo.PostingQueryBuilder().
+			AddColumns([]db.Column{
+				db.Column_TransactionId,
+				db.Column_AccountId,
+				db.Column_Amount,
+				db.Column_Currency,
+				db.Column_DateCreated,
+				db.Column_DateUpdated,
+			}).
+			Insert(ctx, lastId, p.AccountID(), p.Amount(), p.Currency(), time.Now(), time.Now())
 		if err != nil {
 			s.repo.Rollback()
-			return nil, fmt.Errorf("Error creating posting %v:\n%s", p, err)
+			return fmt.Errorf(errorMsg, err)
 		}
 	}
 	if err := s.repo.Commit(); err != nil {
 		s.repo.Rollback()
-		return nil, fmt.Errorf("Error committing CreateTransaction:\n%s", err)
+		return fmt.Errorf(errorMsg, err)
 	}
-	return s.repo.GetTransactionById(ctx, lastID)
+	return nil
 }
 
-func (s *Service) GetAllTransactions(ctx context.Context) ([]*domain.Transaction, error) {
-	t_list, err := s.repo.GetTransactionByDate(ctx, time.Date(1970, time.January, 1, 0, 0, 0, 0, time.Local), time.Now())
+func (s *Service) GetAllTransactions(ctx context.Context, page, perPage int) ([]*domain.Transaction, error) {
+	const errorMsg = "GetAllTransactions failed: %w"
+	tx_arr, err := s.repo.TransactionQueryBuilder().
+		Select(ctx, page, perPage)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errorMsg, err)
 	}
-	return t_list, nil
+	for _, tx := range tx_arr {
+		p, err := s.getPostings(ctx, tx.ID())
+		if err != nil {
+			return nil, fmt.Errorf(errorMsg, err)
+		}
+		tx.SetPostings(p)
+	}
+	return tx_arr, nil
 }
 
 func (s *Service) GetTransactionByID(ctx context.Context, id int64) (*domain.Transaction, error) {
-	tx, err := s.repo.GetTransactionById(ctx, id)
+	const errorMsg = "GetTransactionsByID for ID %d failed: %w"
+	tx_arr, err := s.repo.TransactionQueryBuilder().
+		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(id, 10)).
+		Select(ctx, 0, 1)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf(errorMsg, id, err)
 	}
-	return tx, err
+	p, err := s.getPostings(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf(errorMsg, id, err)
+	}
+	tx_arr[0].SetPostings(p)
+	return tx_arr[0], nil
 }
 
-func (s *Service) UpdateTransaction(ctx context.Context, newTransaction *domain.Transaction) (*domain.Transaction, error) {
+func (s *Service) UpdateTransaction(ctx context.Context, newTransaction *domain.Transaction) error {
+	const errorMsg = "UpdateTranasction failed: %w"
 	if err := newTransaction.Validate(); err != nil {
-		return nil, err
+		return fmt.Errorf(errorMsg, err)
 	}
-	err := s.repo.BeginTx(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("Error starting tx in UpdateTransaction:\n%s", err)
+	if err := s.repo.BeginTx(ctx); err != nil {
+		return fmt.Errorf(errorMsg, err)
 	}
-	lastID, err := s.repo.UpdateTransaction(ctx, newTransaction)
+	err := s.repo.TransactionQueryBuilder().
+		AddColumns([]db.Column{
+			db.Column_Description,
+			db.Column_Date,
+			db.Column_Status,
+			db.Column_DateUpdated,
+		}).
+		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(newTransaction.ID(), 10)).
+		Update(ctx, newTransaction.Description(), newTransaction.Date(), newTransaction.Status(), now())
 	if err != nil {
 		s.repo.Rollback()
-		return nil, fmt.Errorf("Error updating transaction:\n%s", err)
-	}
-	for _, p := range newTransaction.Postings() {
-		p.SetTransactionID(lastID)
-		err := s.repo.UpdatePosting(ctx, p)
-		if err != nil {
-			s.repo.Rollback()
-			return nil, fmt.Errorf("Error updating posting %v:\n%s", p, err)
-		}
+		return fmt.Errorf(errorMsg, err)
 	}
 	if err := s.repo.Commit(); err != nil {
 		s.repo.Rollback()
-		return nil, fmt.Errorf("Error committing CreateTransaction:\n%s", err)
+		return fmt.Errorf(errorMsg, err)
 	}
-	return s.repo.GetTransactionById(ctx, lastID)
+	return nil
 }
 
-func (s *Service) DeletePosting(ctx context.Context, postingID int64) error {
-	return fmt.Errorf("TODO")
+func (s *Service) DeleteTransaction(ctx context.Context, transactionID int64) error {
+	const errorMsg = "DeleteTransaction on ID %d failed: %w"
+	if err := s.repo.BeginTx(ctx); err != nil {
+		return fmt.Errorf(errorMsg, transactionID, err)
+	}
+	err := s.repo.TransactionQueryBuilder().
+		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(transactionID, 10)).
+		Delete(ctx)
+	if err != nil {
+		s.repo.Rollback()
+		return fmt.Errorf(errorMsg, transactionID, err)
+	}
+	if err := s.repo.Commit(); err != nil {
+		s.repo.Rollback()
+		return fmt.Errorf(errorMsg, transactionID, err)
+	}
+	return nil
+}
+
+func (s *Service) getPostings(ctx context.Context, transactionId int64) ([]*domain.Posting, error) {
+	p, err := s.repo.PostingQueryBuilder().
+		AddCondition(db.Column_TransactionId, db.Equal, strconv.FormatInt(transactionId, 10)).
+		Select(ctx, -1, -1)
+	if err != nil {
+		return nil, fmt.Errorf("Failed to get posting %d: %w", transactionId, err)
+	}
+	return p, nil
 }

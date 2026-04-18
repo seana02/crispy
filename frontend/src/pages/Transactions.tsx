@@ -22,7 +22,8 @@ export default function Transactions() {
                         <div class="list-row">
                             <div class="list-row-date">{dateString}</div>
                             <div class="list-row-desc">{data.description}</div>
-                            { data.status == domain.Status.Cleared ? <></> : <div class="list-row-status">{data.status}</div> }
+                            <div class="list-middle-gap"></div>
+                            <div class="list-row-status">{ data.status == domain.Status.Cleared ? <></> : data.status}</div>
                             <button class="list-row-button list-row-edit" onClick={() => navigate("/transactions/"+data.id)}>
                                 <PencilLine class="svg-small" />
                             </button>

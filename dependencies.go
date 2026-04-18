@@ -7,18 +7,22 @@ import (
 	"crispy/scheduler"
 	"crispy/service"
 	"fmt"
+	"log/slog"
 )
 
 type Dependencies struct {
 	Service          *service.Service
 	RecurringManager *scheduler.Manager
 	RuleEngine       *automation.Engine
+	Logger           *slog.Logger
 	// CurrencyService    *currency.Service
 }
 
 func BuildDependencies(cfg *Config) (*Dependencies, error) {
-	fmt.Println("Building dependencies")
-	db, err := db.InitSQLite(cfg.DBPath)
+	logger := slog.New(slog.NewTextHandler(logWriter(), &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+	db, err := db.InitSQLite(cfg.DBPath, logger)
 	if err != nil {
 		return nil, fmt.Errorf("Failed to initialize sqlite database: %s", err)
 	}
@@ -34,20 +38,10 @@ func BuildDependencies(cfg *Config) (*Dependencies, error) {
 		Service:          service,
 		RecurringManager: recurringManager,
 		RuleEngine:       ruleEngine,
+		Logger:           logger,
 		// CurrencyService:    currencyService,
 	}, nil
 }
-
-// Returns the list of Go functions bound to Wails frontend
-// func (a *Dependencies) WailsBindings() []interface{} {
-// 	return []interface{}{
-// 		a.TransactionService,
-// 		a.AccountService,
-// 		a.RecurringManager,
-// 		// a.CurrencyService,
-// 		a.RuleEngine,
-// 	}
-// }
 
 // Returns list of Enum bindings
 func (a *Dependencies) WailsEnumBindings() []interface{} {

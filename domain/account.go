@@ -28,15 +28,15 @@ type Account struct {
 }
 
 type AccountDTO struct {
-	Id          int64         `json:"id"`
-	ParentID    int64         `json:"parentID"`
-	Name        string        `json:"name"`
-	Type_       Type          `json:"type"`
-	Currency    string        `json:"currency"`
-	Description	string        `json:"description"`
-	Active      bool          `json:"active"`
-	DateCreated string        `json:"dateCreated"`
-	DateUpdated string        `json:"dateUpdated"`
+	Id          int64  `json:"id"`
+	ParentID    int64  `json:"parentID"`
+	Name        string `json:"name"`
+	Type_       Type   `json:"type"`
+	Currency    string `json:"currency"`
+	Description string `json:"description"`
+	Active      bool   `json:"active"`
+	DateCreated string `json:"dateCreated"`
+	DateUpdated string `json:"dateUpdated"`
 }
 
 func (a *AccountDTO) ToDomain() (*Account, error) {
@@ -59,18 +59,18 @@ func (a *AccountDTO) ToDomain() (*Account, error) {
 		a.Active,
 		created.Local(),
 		updated.Local(),
-	)
+	), nil
 }
 
 func (a *Account) ToDTO() *AccountDTO {
 	return &AccountDTO{
-		Id: a.id,
-		ParentID: a.parentID,
-		Name: a.name,
-		Type_: a.type_,
-		Currency: a.currency,
+		Id:          a.id,
+		ParentID:    a.parentID,
+		Name:        a.name,
+		Type_:       a.type_,
+		Currency:    a.currency,
 		Description: a.description,
-		Active: a.active,
+		Active:      a.active,
 		DateCreated: a.dateCreated.Format(time.RFC3339),
 		DateUpdated: a.dateUpdated.Format(time.RFC3339),
 	}
@@ -86,7 +86,7 @@ func NewAccount(
 	active bool,
 	dateCreated time.Time,
 	dateUpdated time.Time,
-) (*Account, error) {
+) *Account {
 	a := &Account{
 		id,
 		parentID,
@@ -98,10 +98,7 @@ func NewAccount(
 		dateCreated,
 		dateUpdated,
 	}
-	if err := a.Validate(); err != nil {
-		return nil, err
-	}
-	return a, nil
+	return a
 }
 
 func (a *Account) ID() int64              { return a.id }

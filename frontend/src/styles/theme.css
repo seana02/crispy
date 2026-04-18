@@ -24,6 +24,8 @@
 
   --color-accent-info: #4ECDC4;
   --color-accent-success: #10B981;
+  --color-accent-warn: #D9B052;
+  --color-accent-warn-light: #D9C46A;
   --color-accent-error: #E76F51;
 }
 

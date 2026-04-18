@@ -1,12 +1,12 @@
 package service
 
-import "crispy/db/repository"
+import (
+	"crispy/db"
+	"time"
+)
 
 type serviceDeps interface {
-	repository.TransactionRepository
-	repository.PostingRepository
-	repository.AccountRepository
-	repository.TxRepo
+	db.Repository
 }
 
 type Service struct {
@@ -15,4 +15,9 @@ type Service struct {
 
 func NewService(repo serviceDeps) *Service {
 	return &Service{repo: repo}
+}
+
+// Returns the current time with sub-seconds truncated
+func now() time.Time {
+	return time.Now().Local().Truncate(time.Second)
 }

@@ -1,5 +1,5 @@
 import { createStore, reconcile } from "solid-js/store";
-import { CreateTransaction, UpdateTransaction, GetTransactionList } from "../../wailsjs/go/main/App";
+import { CreateTransaction, UpdateTransaction, GetTransactionList, DeleteTransaction } from "../../wailsjs/go/main/App";
 import { domain } from "../../wailsjs/go/models";
 import { createEffect, createResource } from "solid-js";
 
@@ -72,8 +72,8 @@ const submitEditTransaction = async (
 
 const getTransactionById = (id: number) => txList.find(i => i.id === id);
 
-const deleteTransactionById = (id: number) => {
-    console.log("Deleting", id);
+const deleteTransactionById = async (id: number) => {
+    await DeleteTransaction(id);
     refetch();
 }
 
@@ -83,6 +83,5 @@ export {
     submitEditTransaction,
     getTransactionById,
     deleteTransactionById,
-    refetch,
 };
 

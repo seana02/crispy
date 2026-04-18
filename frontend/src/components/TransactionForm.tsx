@@ -2,11 +2,12 @@ import { createSignal, For } from "solid-js";
 import "../styles/newItem.css";
 import { createStore } from "solid-js/store";
 import { domain } from "../../wailsjs/go/models";
-import { GetAccountID } from "../../wailsjs/go/main/App";
 import { useNavigate } from "@solidjs/router";
+import { Currency } from "src/stores/currencyStore";
+import { getAccountIdByName } from "src/stores/accountStore";
 
 interface TransactionProps {
-    id: number
+    id?: number
     description?: string
     date?: Date
     status?: domain.Status
@@ -30,8 +31,6 @@ export default function TransactionForm(props: TransactionProps) {
     );
     const [error, setError] = createSignal("");
 
-    const currencies = ["USD", "JPY", "EUR"];
-
     async function handleSubmit(e: Event) {
         let failed = false;
         e.preventDefault();
@@ -51,7 +50,7 @@ export default function TransactionForm(props: TransactionProps) {
             return;
         }
         const accountIDPromises = postings.map(async (p, i) => {
-            const newID = await GetAccountID(p.account);
+            const newID = await getAccountIdByName(p.account);
             if (newID == -1) {
                 setError("Account \"" + p.account + "\" does not exist");
             failed = true;
@@ -168,7 +167,7 @@ export default function TransactionForm(props: TransactionProps) {
                                     value={p.currency}
                                     onChange={e => setPostings(i(), "currency", e.currentTarget.value)}
                                 >
-                                    <For each={currencies} >
+                                    <For each={Object.values(Currency)} >
                                         {s => <option value={s}>{s}</option>}
                                     </For>
                                 </select>

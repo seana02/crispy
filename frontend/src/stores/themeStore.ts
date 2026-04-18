@@ -1,10 +1,10 @@
 import { createSignal, onMount } from "solid-js";
 
-type Themes = "professional-dark" | "sleek-neutral-dark" | "sleek-neutral-light"
-const [theme, setTheme] = createSignal<Themes>("sleek-neutral-dark");
+type Theme = "professional-dark" | "sleek-neutral-dark" | "sleek-neutral-light"
+const [theme, setTheme] = createSignal<Theme>("sleek-neutral-dark");
 
 onMount(() => {
-  const saved = localStorage.getItem("theme") as Themes | null;
+  const saved = localStorage.getItem("theme") as Theme | null;
   if (saved) setTheme(saved);
   document.documentElement.setAttribute("data-theme", theme());
 });

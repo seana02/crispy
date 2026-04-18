@@ -24,8 +24,12 @@
   gap: 0.6rem;
 }
 
-.list-row-status {
+.list-middle-gap {
   margin-left: auto;
+}
+
+.list-row-status,
+.list-row-desc {
   font-style: italic;
   font-weight: lighter;
 }

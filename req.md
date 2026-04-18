@@ -55,6 +55,7 @@
 - [ ? ] Undo/redo functionality
 - [ ? ] Support for attachments (e.g., receipts)
 - [ ? ] Auto-fetch external rates from an external service
+- [ ? ] Wishlist, which can reference your budget
 
 ## Import/Export & Interoperability
 - [ ? ] Ledger/hledger-style text import/export

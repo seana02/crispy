@@ -2,37 +2,115 @@ package db
 
 import (
 	"context"
-	"crispy/currency"
-	"crispy/domain"
 	"database/sql"
 	"embed"
-	"encoding/json"
+	"errors"
 	"fmt"
+	"log/slog"
+	"strconv"
 	"strings"
-	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/sqlite3"
 	"github.com/golang-migrate/migrate/v4/source/iofs"
-	_ "github.com/mattn/go-sqlite3"
-	"github.com/shopspring/decimal"
 )
 
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
-type SQLiteDB struct {
-	db *sql.DB
-	tx *sql.Tx
+type ComparisonOperator int
+type Table int
+
+const (
+	Equal ComparisonOperator = iota
+	NotEqual
+	LessThan
+	GreaterThan
+	LessThanOrEqual
+	GreaterThanOrEqual
+	Like
+	Is
+	IsNot
+)
+
+func (co ComparisonOperator) String() string {
+	switch co {
+	case Equal:
+		return "="
+	case NotEqual:
+		return "<>"
+	case LessThan:
+		return "<"
+	case GreaterThan:
+		return ">"
+	case LessThanOrEqual:
+		return "<="
+	case GreaterThanOrEqual:
+		return ">="
+	case Like:
+		return "LIKE"
+	case Is:
+		return "IS"
+	case IsNot:
+		return "IS NOT"
+	}
+	return ""
 }
 
-func InitSQLite(name string) (*SQLiteDB, error) {
+const (
+	Table_Transaction Table = iota
+	Table_Account
+	Table_Posting
+)
+
+func (t Table) String() string {
+	switch t {
+	case Table_Transaction:
+		return "\"Transaction\""
+	case Table_Account:
+		return "\"Account\""
+	case Table_Posting:
+		return "\"Posting\""
+	}
+	return ""
+}
+
+type Where struct {
+	Column Column
+	Op     ComparisonOperator
+	Value  string
+}
+
+type Join struct {
+	TableName string
+	Condition string
+}
+
+type SQLite_Builder struct {
+	Handle    *SQLiteDB
+	table     Table
+	ColumnSet map[Column]bool
+	Columns   []Column
+	Join      *Join
+	Where     []Where
+	OrderBy   []Column
+	Reverse   bool
+}
+
+type SQLiteDB struct {
+	db     *sql.DB
+	tx     *sql.Tx
+	Logger *slog.Logger
+}
+
+func InitSQLite(name string, logger *slog.Logger) (*SQLiteDB, error) {
 	handle, err := getHandle(name)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get database handle: %v", err)
+		return nil, err
 	}
 
-	return &SQLiteDB{db: handle}, nil
+	logger.Debug("SQLite initialized successfully")
+	return &SQLiteDB{db: handle, Logger: logger}, nil
 }
 
 func getHandle(name string) (*sql.DB, error) {
@@ -75,6 +153,9 @@ func getHandle(name string) (*sql.DB, error) {
 }
 
 func (s *SQLiteDB) BeginTx(ctx context.Context) error {
+	if s.tx != nil {
+		return fmt.Errorf("Cannot begin- Tx already started")
+	}
 	tx, err := s.db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -91,6 +172,7 @@ func (s *SQLiteDB) Rollback() error {
 	if err != nil {
 		return fmt.Errorf("Rollback failed: %s", err)
 	}
+	s.tx = nil
 	return nil
 }
 
@@ -103,450 +185,214 @@ func (s *SQLiteDB) Commit() error {
 		s.tx.Rollback()
 		return fmt.Errorf("Commit failed- Tx rolled back: %s", err)
 	}
+	s.tx = nil
 	return nil
 }
 
-func (s *SQLiteDB) CreateTransaction(ctx context.Context, t *domain.Transaction) (int64, error) {
-	const funcError = "Error in CreateTransaction"
-	if s.tx == nil {
-		return -1, fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
+// Build a SQL query.
+//
+// Insert creates a new row using the columns specified. It may return an error.
+// Select returns a list of Transactions with all columns, regardless of columns specified.
+// Update sets the specified columns to all rows found. It requires at least one WHERE clause
+// Delete deletes all rows satisfying the given WHERE clause(s).
+func (s *SQLiteDB) SQLBuilder(table Table) *SQLite_Builder {
+	return &SQLite_Builder{
+		Handle:    s,
+		table:     table,
+		ColumnSet: make(map[Column]bool),
 	}
-	now := time.Now().Local().Truncate(time.Second)
-	result, err := s.tx.ExecContext(ctx, "INSERT INTO \"Transaction\" (description, date, status, date_created, date_updated) VALUES (?, ?, ?, ?, ?)",
-		t.Description(),
-		t.Date(),
-		t.Status(),
-		now,
-		now,
-	)
-	// TODO: TAGS!!!!
-	if err != nil {
-		return -1, fmt.Errorf("%s inserting transaction: %s", funcError, err)
-	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return -1, fmt.Errorf("%s getting LastInsertID: %s", funcError, err)
-	}
-	return id, nil
 }
 
-func (s *SQLiteDB) GetTransactionById(ctx context.Context, id int64) (*domain.Transaction, error) {
-	const funcError = "Error in GetTransactionById"
-	var description string
-	var date time.Time
-	var status domain.Status
-	var referenceID *int64
-	var dateCreated, dateUpdated time.Time
-	var created, updated sql.NullTime
-	err := s.db.QueryRowContext(ctx, "SELECT * FROM \"Transaction\" WHERE id = ?", id).Scan(
-		&id, &description, &date, &status, &referenceID, &created, &updated,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("%s creating query: %s", funcError, err)
+func (s *SQLite_Builder) AddColumn(c Column) {
+	if !s.ColumnSet[c] {
+		s.ColumnSet[c] = true
+		s.Columns = append(s.Columns, c)
 	}
-	postings, err := s.GetPostingsByTransactionId(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("%s getting postings: %s", funcError, err)
-	}
-	tags, err := s.getTagsById(ctx, id)
-	if err != nil {
-		return nil, fmt.Errorf("%s getting tags: %s", funcError, err)
-	}
-	if created.Valid {
-		dateCreated = created.Time
-	}
-	if updated.Valid {
-		dateUpdated = created.Time
-	}
-	return domain.NewTransaction(
-		id, description, date, status, referenceID, dateCreated, dateUpdated, postings, tags,
-	), nil
 }
 
-func (s *SQLiteDB) GetTransactionByTag(ctx context.Context, tagID int64) ([]*domain.Transaction, error) {
-	const funcError = "Error in GetTransactionByTag"
-	var id int64
-	var description string
-	var date time.Time
-	var status domain.Status
-	var referenceID *int64
-	var dateCreated, dateUpdated time.Time
-	rows, err := s.db.QueryContext(ctx, "SELECT \"Transaction\".* FROM \"Transaction\" JOIN Transaction_Tag ON Transaction_Tag.transaction_id = \"Transaction\".id WHERE Transaction_Tag.tag_id = ?", tagID)
-	if err != nil {
-		return nil, fmt.Errorf("%s creating query: %s", funcError, err)
+func (s *SQLite_Builder) AddColumns(columns []Column) {
+	for _, c := range columns {
+		s.AddColumn(c)
 	}
+}
 
-	var ts []*domain.Transaction
+func (s *SQLite_Builder) AddCondition(c Column, op ComparisonOperator, val string) {
+	s.Where = append(s.Where, Where{c, op, val})
+}
+
+func (s *SQLite_Builder) AddJoin(tableName, condition string) {
+	s.Join = &Join{
+		TableName: tableName,
+		Condition: condition,
+	}
+}
+
+func (s *SQLite_Builder) AddOrderBy(c []Column, r bool) {
+	s.OrderBy = c
+	s.Reverse = r
+}
+
+func (s *SQLite_Builder) Insert(ctx context.Context, args ...any) (int64, error) {
+	if s.Handle.tx == nil {
+		return -1, errors.New("Error inserting transaction: no Tx started. Call SQLiteDB.BeginTx")
+	}
+	var columnList strings.Builder
+	var valueList strings.Builder
+	skip := true
+	for _, k := range s.Columns {
+		if k == Column_All {
+			return -1, errors.New("Cannot insert using All")
+		}
+		if !skip {
+			columnList.Write([]byte(", "))
+			valueList.Write([]byte(", "))
+		}
+		columnList.Write([]byte(k.String()))
+		valueList.Write([]byte("?"))
+		skip = false
+	}
+	var stmt strings.Builder
+	stmt.Write([]byte("INSERT INTO "))
+	stmt.Write([]byte(s.table.String()))
+	stmt.Write([]byte(" ("))
+	stmt.Write([]byte(columnList.String()))
+	stmt.Write([]byte(") VALUES ("))
+	stmt.Write([]byte(valueList.String()))
+	stmt.Write([]byte(")"))
+
+	s.Handle.Logger.Debug("Inserting", "Query", stmt.String())
+	result, err := s.Handle.tx.ExecContext(ctx, stmt.String(), args...)
+	if err != nil {
+		return -1, fmt.Errorf("Insert failed: %w", err)
+	}
+	return result.LastInsertId()
+}
+
+func (s *SQLite_Builder) Select(ctx context.Context, page, perPage int, callback func(*sql.Rows) error) error {
+	var stmt strings.Builder
+	stmt.Reset()
+	stmt.Write([]byte("SELECT "))
+	stmt.Write([]byte(s.table.String()))
+	stmt.Write([]byte(".* FROM "))
+	stmt.Write([]byte(s.table.String()))
+
+	writeJoin(&stmt, s.Join)
+	writeWhere(&stmt, s.Where)
+	writeOrderBy(&stmt, s.OrderBy, s.Reverse)
+	writePagination(&stmt, page, perPage)
+
+	s.Handle.Logger.Debug("Selecting", "Query", stmt.String())
+	rows, err := s.Handle.db.QueryContext(ctx, stmt.String())
+	if err != nil {
+		return fmt.Errorf("Select failed: %w", err)
+	}
 	for rows.Next() {
-		rows.Scan(
-			&id, &description, &date, &status, &referenceID, &dateCreated, &dateUpdated,
-		)
-		postings, err := s.GetPostingsByTransactionId(ctx, id)
-		if err != nil {
-			return nil, fmt.Errorf("%s getting postings: %s", funcError, err)
+		if err := callback(rows); err != nil {
+			return fmt.Errorf("Callback failed: %w", err)
 		}
-		tags, err := s.getTagsById(ctx, id)
-		if err != nil {
-			return nil, fmt.Errorf("%s getting tags: %s", funcError, err)
-		}
-		newTx := domain.NewTransaction(
-			id, description, date, status, referenceID, dateCreated, dateUpdated, postings, tags,
-		)
-		ts = append(ts, newTx)
-	}
-
-	return ts, nil
-}
-
-func (s *SQLiteDB) GetTransactionByDate(ctx context.Context, from time.Time, to time.Time) ([]*domain.Transaction, error) {
-	const funcError = "Error in GetTransactionByDate"
-	var id int64
-	var description string
-	var date time.Time
-	var status domain.Status
-	var referenceID *int64
-	var dateCreated, dateUpdated time.Time
-	// rows, err := s.db.QueryContext(ctx, "SELECT * FROM \"Transaction\" WHERE date(\"date\") >= ? and date(\"date\") < ?", from.Format("2006-01-02"), to.Format("2006-01-02"))
-	rows, err := s.db.QueryContext(ctx, "SELECT * FROM \"Transaction\"")
-	if err != nil {
-		return nil, fmt.Errorf("%s creating query: %s", funcError, err)
-	}
-
-	var ts []*domain.Transaction
-	for rows.Next() {
-		rows.Scan(
-			&id, &description, &date, &status, &referenceID, &dateCreated, &dateUpdated,
-		)
-		postings, err := s.GetPostingsByTransactionId(ctx, id)
-		if err != nil {
-			return nil, fmt.Errorf("%s getting postings: %s", funcError, err)
-		}
-		tags, err := s.getTagsById(ctx, id)
-		if err != nil {
-			return nil, fmt.Errorf("%s getting tags: %s", funcError, err)
-		}
-		newTx := domain.NewTransaction(
-			id, description, date, status, referenceID, dateCreated, dateUpdated, postings, tags,
-		)
-		ts = append(ts, newTx)
-	}
-
-	return ts, nil
-}
-
-func (s *SQLiteDB) UpdateTransaction(ctx context.Context, t *domain.Transaction) (int64, error) {
-	const funcError = "Error in UpdateTransaction"
-	if s.tx == nil {
-		return -1, fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
-	}
-
-	now := time.Now().Local().Truncate(time.Second)
-	_, err := s.tx.ExecContext(ctx, "UPDATE \"Transaction\" SET description = ?, date = ?, status = ?, date_updated = ? WHERE id = ?",
-		t.Description(),
-		t.Date(),
-		t.Status(),
-		now,
-		t.ID(),
-	)
-	// TODO: TAGS!!!!!
-	if err != nil {
-		return -1, fmt.Errorf("%s: %s", funcError, err)
-	}
-	return t.ID(), nil
-}
-
-func (s *SQLiteDB) DeleteTransaction(ctx context.Context, id int64) error {
-	const funcError = "Error in DeleteTransction"
-	if s.tx == nil {
-		return fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
-	}
-
-	_, err := s.tx.ExecContext(ctx, "DELETE FROM \"Transaction\" WHERE id = ?", id)
-	if err != nil {
-		return fmt.Errorf("%s: %s", funcError, err)
 	}
 	return nil
 }
 
-func (s *SQLiteDB) getTagsById(ctx context.Context, id int64) ([]string, error) {
-	rows, err := s.db.QueryContext(ctx, "SELECT * FROM Transaction_Tags WHERE transaction_id = ?", id)
-	if err != nil {
-		return nil, err
+func (s *SQLite_Builder) Update(ctx context.Context, args ...any) error {
+	if s.Handle.tx == nil {
+		return errors.New("Error updating transaction: no Tx started. Call SQLiteDB.BeginTx")
 	}
-	defer rows.Close()
-	var t_id int64
-	var name string
-	var tags []string
-	for rows.Next() {
-		err := rows.Scan(&t_id, &name)
-		if err != nil {
-			return nil, fmt.Errorf("Failed to scan tag name: %s", err)
+	if len(s.Where) <= 0 {
+		return errors.New("Update requires a WHERE clause")
+	}
+	var columnList strings.Builder
+	skip := true
+	for _, k := range s.Columns {
+		if !skip {
+			columnList.Write([]byte(", "))
 		}
-		tags = append(tags, name)
+		columnList.Write([]byte(k.String()))
+		columnList.Write([]byte(" = ?"))
+		skip = false
 	}
-	return tags, nil
+	var stmt strings.Builder
+	stmt.Write([]byte("UPDATE "))
+	stmt.Write([]byte(s.table.String()))
+	stmt.Write([]byte(" SET "))
+	stmt.Write([]byte(columnList.String()))
+	writeWhere(&stmt, s.Where)
+	fmt.Printf("Query: %+v\nArgs: %v\n", stmt.String(), args)
+	s.Handle.Logger.Debug("Updating", "Query", stmt.String(), "Args", args)
+	_, err := s.Handle.db.ExecContext(ctx, stmt.String(), args...)
+	if err != nil {
+		return fmt.Errorf("Update failed: %w", err)
+	}
+	return nil
 }
 
-func (s *SQLiteDB) addTagsToTransaction(ctx context.Context, transactionID int64, tags []string) error {
-	const funcError = "Error in addTagsToTransaction"
-	if s.tx == nil {
-		return fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
+func (s *SQLite_Builder) Delete(ctx context.Context) error {
+	if len(s.Where) <= 0 {
+		return errors.New("Cannot unconditionally delete unless explicitly specified")
 	}
-	for _, tag := range tags {
-		query, err := s.tx.QueryContext(ctx, "SELECT id FROM Tag WHERE name = ?", tag)
-		if err != nil {
-			return fmt.Errorf("%s querying for tag \"%s\"", funcError, tag)
-		}
-		var tagId int64
-		if query.Next() {
-			err := query.Scan(&tagId)
-			if err != nil {
-				return fmt.Errorf("%s failed to get tag ID for tag \"%s\"", funcError, tag)
+	var stmt strings.Builder
+	stmt.Write([]byte("DELETE FROM "))
+	stmt.Write([]byte(s.table.String()))
+	writeWhere(&stmt, s.Where)
+	s.Handle.Logger.Debug("Deleting", "Query", stmt.String())
+	_, err := s.Handle.db.ExecContext(ctx, stmt.String())
+	if err != nil {
+		return fmt.Errorf("Delete failed: %w", err)
+	}
+	return nil
+}
+
+func writeJoin(stmt *strings.Builder, join *Join) {
+	if join != nil {
+		stmt.Write([]byte(" JOIN "))
+		stmt.Write([]byte(join.TableName))
+		stmt.Write([]byte(" on "))
+		stmt.Write([]byte(join.Condition))
+	}
+}
+
+func writeWhere(stmt *strings.Builder, where []Where) {
+	if len(where) > 0 {
+		stmt.Write([]byte(" WHERE "))
+		for i, w := range where {
+			if i > 0 {
+				stmt.Write([]byte(" AND "))
 			}
-		} else {
-			result, err := s.tx.ExecContext(ctx, "INSERT INTO Tag (name) VALUES (?)", tag)
-			if err != nil {
-				return fmt.Errorf("%s failed to insert new tag \"%s\"", funcError, tag)
-			}
-			tagId, err = result.LastInsertId()
-			if err != nil {
-				return fmt.Errorf("%s failed to get last insert id for new tag \"%s\"", funcError, tag)
-			}
+			stmt.Write([]byte(w.Column.String()))
+			stmt.Write([]byte(" "))
+			stmt.Write([]byte(w.Op.String()))
+			stmt.Write([]byte(" \""))
+			stmt.Write([]byte(w.Value))
+			stmt.Write([]byte("\""))
 		}
-		s.tx.ExecContext(ctx, "INSERT INTO Transaction_Tag (transaction_id, tag_id) VALUES (?, ?)", transactionID, tagId)
 	}
-	return nil
 }
 
-func (s *SQLiteDB) CreateAccount(ctx context.Context, a *domain.Account) (int64, error) {
-	const funcError = "Error in CreateAccount"
-	if s.tx == nil {
-		return -1, fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
+func writeOrderBy(stmt *strings.Builder, orderby []Column, reverse bool) {
+	if orderby == nil {
+		return
 	}
-	now := time.Now().Local().Truncate(time.Second)
-	result, err := s.tx.ExecContext(ctx, "INSERT INTO Account (parent_id, name, type, currency, description, active, date_created, date_updated) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-		a.ParentID(),
-		a.Name(),
-		a.Type(),
-		a.Currency(),
-		a.Description(),
-		a.Active(),
-		now,
-		now,
-	)
-	if err != nil {
-		return -1, fmt.Errorf("%s creating statement: %s", funcError, err)
-	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return -1, fmt.Errorf("%s getting new account id: %s", funcError, err)
-	}
-	return id, nil
-}
-
-func (s *SQLiteDB) GetAccountById(ctx context.Context, id int64) (*domain.Account, error) {
-	const funcError = "Error in GetAccountById"
-	var parentID int64
-	var name string
-	var type_ domain.Type
-	var currency string
-	var description string
-	var active bool
-	var dateCreated, dateUpdated time.Time
-	err := s.db.QueryRowContext(ctx, "SELECT * FROM \"Account\" WHERE id = ?", id).Scan(
-		&id, &parentID, &name, &type_, &currency, &description, &active, &dateCreated, &dateUpdated,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("%s creating query: %s", funcError, err)
-	}
-	return domain.NewAccount(
-		id, parentID, name, type_, currency, description, active, dateCreated, dateUpdated,
-	)
-}
-
-func (s *SQLiteDB) GetAccountByFullName(ctx context.Context, fullName string) (*domain.Account, error) {
-	const funcError = "Error in GetAccountByFullName"
-	var id int64
-	var parentID int64
-	var name string
-	var type_ domain.Type
-	var currency string
-	var description string
-	var active bool
-	var dateCreated, dateUpdated time.Time
-
-	query := `
-	WITH RECURSIVE
-		path_parts(step, name) AS (
-			SELECT key+1, value FROM json_each(?)
-		),
-		path_len AS (
-			SELECT COUNT(*) as total FROM path_parts
-		),
-		traversal(id, name, step) AS (
-			SELECT a.id, a.name, 1
-			FROM "Account" a
-			WHERE a.name = (SELECT name FROM path_parts WHERE step = 1)
-			  AND a.parent_id = 0
-		
-			UNION ALL
-
-			SELECT a.id, a.name, p.step+1
-			FROM "Account" a
-			JOIN traversal p ON a.parent_id = p.id
-			JOIN path_parts pp ON a.name = pp.name AND pp.step = p.step+1
-		)
-	SELECT a.* FROM "Account" a
-	JOIN traversal t ON t.id = a.id
-	WHERE step = (SELECT total FROM path_len)
-	ORDER BY step DESC
-	LIMIT 1;
-	`
-
-	parts := strings.Split(fullName, ":")
-	pathJson, _ := json.Marshal(parts)
-
-	err := s.db.QueryRowContext(ctx, query, pathJson).Scan(
-		&id, &parentID, &name, &type_, &currency, &description, &active, &dateCreated, &dateUpdated,
-	)
-	// err := s.db.QueryRowContext(ctx, query, pathJson).Scan(&id)
-	if err != nil {
-		return nil, fmt.Errorf("Error finding account %s: %s", fullName, err)
-	}
-
-	return domain.NewAccount(
-		id, parentID, name, type_, currency, description, active, dateCreated, dateUpdated,
-	)
-	// return s.GetAccountById(ctx, id)
-}
-
-func (s *SQLiteDB) UpdateAccount(ctx context.Context, a *domain.Account) error {
-	const funcError = "Error in UpdateAccount"
-	if s.tx == nil {
-		return fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
-	}
-	now := time.Now().Local().Truncate(time.Second)
-	_, err := s.tx.ExecContext(ctx, "UPDATE \"Posting\" SET parent_id = ?, name = ?, type = ?, currency = ?, description = ?, active = ?, date_updated = ? WHERE id = ?",
-		a.ParentID(),
-		a.Name(),
-		a.Type(),
-		a.Currency(),
-		a.Description(),
-		a.Active(),
-		now,
-		a.ID(),
-	)
-	if err != nil {
-		return fmt.Errorf("%s updating row: %s", funcError, err)
-	}
-	return nil
-}
-
-func (s *SQLiteDB) DeleteAccount(ctx context.Context, id int64) error {
-	const funcError = "Error in UpdateAccount"
-	if s.tx == nil {
-		return fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
-	}
-	_, err := s.tx.ExecContext(ctx, "DELETE FROM \"Posting\" WHERE id = ?", id)
-	if err != nil {
-		return fmt.Errorf("%s deleting row: %s", funcError, err)
-	}
-	return nil
-}
-
-func (s *SQLiteDB) CreatePosting(ctx context.Context, p *domain.Posting) (int64, error) {
-	const funcError = "Error in CreatePosting"
-	if s.tx == nil {
-		return -1, fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
-	}
-	now := time.Now().Local().Truncate(time.Second)
-	result, err := s.tx.ExecContext(ctx, "INSERT INTO Posting (transaction_id, account_id, amount, currency, date_created, date_updated) VALUES (?, ?, ?, ?, ?, ?)",
-		p.TransactionID(),
-		p.AccountID(),
-		p.Amount().StringFixed(currency.PrecisionFor(p.Currency())),
-		p.Currency(),
-		now,
-		now,
-	)
-	if err != nil {
-		return -1, fmt.Errorf("%s inserting posting: %s", funcError, err)
-	}
-	id, err := result.LastInsertId()
-	if err != nil {
-		return -1, fmt.Errorf("%s getting LastInsertID: %s", funcError, err)
-	}
-	return id, nil
-}
-
-func (s *SQLiteDB) GetPostingById(ctx context.Context, id int64) (*domain.Posting, error) {
-	const funcError = "Error in GetPostingsByID"
-	var postingID, transactionID, accountID int64
-	var amount decimal.Decimal
-	var currency string
-	var dateCreated, dateUpdated time.Time
-	err := s.db.QueryRowContext(ctx, "SELECT * FROM Posting WHERE id = ?", id).Scan(
-		&postingID, &transactionID, &accountID, &amount, &currency, &dateCreated, &dateUpdated,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("%s getting row: %s", funcError, err)
-	}
-	return domain.NewPosting(postingID, transactionID, accountID, amount, currency, dateCreated, dateUpdated), nil
-}
-
-func (s *SQLiteDB) GetPostingsByTransactionId(ctx context.Context, id int64) ([]*domain.Posting, error) {
-	const funcError = "Error in GetPostingsByTransactionId"
-	rows, err := s.db.QueryContext(ctx, "SELECT * FROM Posting WHERE transaction_id = ?", id)
-	if err != nil {
-		return nil, fmt.Errorf("%s creating query: %s", funcError, err)
-	}
-	defer rows.Close()
-	var p_id, transactionID, accountID int64
-	var amount decimal.Decimal
-	var currency string
-	var dateCreated, dateUpdated time.Time
-	var postings []*domain.Posting
-	for rows.Next() {
-		err := rows.Scan(&p_id, &transactionID, &accountID, &amount, &currency, &dateCreated, &dateUpdated)
-		if err != nil {
-			return nil, fmt.Errorf("%s scanning posting row: %s", funcError, err)
+	stmt.Write([]byte(" ORDER BY "))
+	for i, c := range orderby {
+		if i > 0 {
+			stmt.Write([]byte(", "))
 		}
-		postings = append(postings, domain.NewPosting(
-			p_id, transactionID, accountID, amount, currency, dateCreated, dateUpdated,
-		))
+		stmt.Write([]byte(c.String()))
 	}
-	return postings, nil
+	if reverse {
+		stmt.Write([]byte("DESC"))
+	}
 }
 
-func (s *SQLiteDB) UpdatePosting(ctx context.Context, p *domain.Posting) error {
-	const funcError = "Error in UpdatePosting"
-	if s.tx == nil {
-		return fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
+func writePagination(stmt *strings.Builder, page, perPage int) {
+	if page < 0 {
+		return
 	}
-
-	now := time.Now().Local().Truncate(time.Second)
-	_, err := s.tx.ExecContext(ctx, "UPDATE Posting SET transaction_id = ?, account_id = ?, amount = ?, currency = ?, date_updated = ? WHERE id = ?",
-		p.TransactionID(),
-		p.AccountID(),
-		p.Amount(),
-		p.Currency(),
-		now,
-		p.ID(),
-	)
-	if err != nil {
-		return fmt.Errorf("%s: %s", funcError, err)
+	if perPage < 0 {
+		return
 	}
-	return nil
-}
-
-func (s *SQLiteDB) DeletePosting(ctx context.Context, id int64) error {
-	const funcError = "Error in DeletePosting"
-	if s.tx == nil {
-		return fmt.Errorf("%s: no Tx started. Call SQLiteDB.BeginTx", funcError)
-	}
-
-	_, err := s.tx.ExecContext(ctx, "DELETE FROM Posting WHERE id = ?", id)
-	if err != nil {
-		return fmt.Errorf("%s: %s", funcError, err)
-	}
-	return nil
+	stmt.Write([]byte(" LIMIT "))
+	stmt.Write([]byte(strconv.Itoa(perPage)))
+	stmt.Write([]byte(" OFFSET "))
+	stmt.Write([]byte(strconv.Itoa(page * perPage)))
 }

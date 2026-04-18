@@ -18,8 +18,24 @@ export function CreateTransactionSample(arg1) {
   return window['go']['main']['App']['CreateTransactionSample'](arg1);
 }
 
-export function GetAccountID(arg1) {
-  return window['go']['main']['App']['GetAccountID'](arg1);
+export function DeleteAccount(arg1) {
+  return window['go']['main']['App']['DeleteAccount'](arg1);
+}
+
+export function DeleteTransaction(arg1) {
+  return window['go']['main']['App']['DeleteTransaction'](arg1);
+}
+
+export function GetAccountByID(arg1) {
+  return window['go']['main']['App']['GetAccountByID'](arg1);
+}
+
+export function GetAccountIDByName(arg1) {
+  return window['go']['main']['App']['GetAccountIDByName'](arg1);
+}
+
+export function GetAccountList() {
+  return window['go']['main']['App']['GetAccountList']();
 }
 
 export function GetTransactionByID(arg1) {
@@ -34,8 +50,16 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function SubmitAccount(arg1, arg2) {
+  return window['go']['main']['App']['SubmitAccount'](arg1, arg2);
+}
+
 export function SubmitTransaction(arg1, arg2) {
   return window['go']['main']['App']['SubmitTransaction'](arg1, arg2);
+}
+
+export function UpdateAccount(arg1) {
+  return window['go']['main']['App']['UpdateAccount'](arg1);
 }
 
 export function UpdateTransaction(arg1) {

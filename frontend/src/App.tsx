@@ -9,6 +9,7 @@ import Budgets from "./pages/Budgets";
 import Accounts from "./pages/Accounts";
 import NewAccount from "./pages/NewAccount";
 import Settings from "./pages/Settings";
+import EditAccount from 'src/pages/EditAccount';
 
 export default function App() {
     return (
@@ -23,6 +24,7 @@ export default function App() {
             <Route path="/accounts">
                 <Route path="/" component={Accounts} />
                 <Route path="/add" component={NewAccount} />
+                <Route path="/:id" component={EditAccount} />
             </Route>
             <Route path="/settings" component={Settings} />
         </Router>

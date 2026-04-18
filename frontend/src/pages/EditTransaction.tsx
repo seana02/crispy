@@ -10,7 +10,6 @@ export default function EditTransaction() {
 
     const id = +params.id;
 
-
     const [tx] = createResource(() => id, () => getTransactionById(id));
 
     const data = createMemo(() => {
