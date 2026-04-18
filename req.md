@@ -2,13 +2,14 @@
 
 ## Accounts & Transactions
 ### Account Management
-- [ ? ] Create, edit, and delete accounts
-- [ ? ] Support for nested/subaccounts (e.g., Assets:Bank:Checking)
-- [ ? ] Ability to mark accounts as active/inactive
-- [ ? ] Account types: Asset, Liability, Income, Expense, Equity
-- [ ? ] Each account has a currency
+- [ O ] Create, edit, and delete accounts
+- [ O ] Support for nested/subaccounts (e.g., Assets:Bank:Checking)
+- [ O ] Ability to mark accounts as active/inactive
+- [ O ] Account types: Asset, Liability, Income, Expense, Equity
+- [ O ] Each account has a currency
+- [ X ] Tree view for accounts
 ### Transactions
-- [ ? ] Double-entry bookkeeping: Each transaction must balance
+- [ O ] Double-entry bookkeeping: Each transaction must balance
 - [ ? ] Support for multiple postings per transaction
 - [ ? ] Support for multiple currencies in a transaction
 - [ ? ] Stores exchange rates
@@ -315,7 +316,7 @@ Recurrence (id PK)
 ├─ currency
 └─ created_at
 
-Recurrence (id PK)
+Budget (id PK)
 ├─ name
 ├─ description
 ├─ target
@@ -376,17 +377,12 @@ internal/
     ├─ exchange_rate.go
     └─ errors.go
 ├── db/            # Data access, migrations, persistence logic
-    ├─ sqlite.go               # DB initializations, migrations
     ├─ migrations/             # SQL migration files, see golang-migrate/migrate
-    ├─ repository/             # Defines the interfaces for the various queries/commands that can be performed
-    │  ├─ account_repo.go
-    │  ├─ transaction_repo.go
-    │  ├─ posting_repo.go
-    │  ├─ recurring_repo.go
-    │  ├─ rule_repo.go
-    │  ├─ budget_repo.go
-    │  ├─ tag_repo.go
-    │  ├─ exchange_repo.go
+    ├─ repository.go           # Defines the interfaces for the various queries/commands that can be performed
+    ├─ sqlite.go               # DB initializations, migrations, general sqlite interface
+    ├─ sqlite_account.go       # Account table interface
+    ├─ sqlite_transaction.go   # Transaction table interface
+    ├─ sqlite_posting.go       # Posting table interface
     └─ seed.go                 # optional demo data loader
 ├── scheduler/     # Handles recurring transactions; each RecurringTransaction spawns a job, jobs evaluate amount_expression using library
     ├─ manager.go     # Checks and generates pending recurring transactions
