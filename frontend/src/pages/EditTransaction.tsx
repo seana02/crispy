@@ -8,7 +8,7 @@ import TransactionForm from "src/components/TransactionForm";
 export default function EditTransaction() {
     const params = useParams();
 
-    const id = +params.id;
+    const id = +params.id!;
 
     const [tx] = createResource(() => id, () => getTransactionById(id));
 
@@ -31,7 +31,7 @@ export default function EditTransaction() {
         <ErrorBoundary fallback={err => <p>Loading error: {err.message}</p>}>
             <Suspense fallback={<p>Loading...</p>}>
                 <TransactionForm
-                    id={+params.id}
+                    id={id}
                     description={data()!.description}
                     date={data()!.date}
                     status={data()!.status}
