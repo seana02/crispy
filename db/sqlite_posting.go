@@ -30,8 +30,8 @@ func (s *SQLite_PostingBuilder) AddColumns(columns []Column) *SQLite_PostingBuil
 	return s
 }
 
-func (s *SQLite_PostingBuilder) AddCondition(c Column, op ComparisonOperator, val string) *SQLite_PostingBuilder {
-	s.SQLite_Builder.AddCondition(c, op, val)
+func (s *SQLite_PostingBuilder) SetCondition(cond Condition) *SQLite_PostingBuilder {
+	s.SQLite_Builder.SetCondition(cond)
 	return s
 }
 

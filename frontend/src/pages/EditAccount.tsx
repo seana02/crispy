@@ -7,7 +7,7 @@ import { domain } from "wailsjs/go/models";
 export default function EditAccount() {
     const params = useParams();
 
-    const id = +params.id;
+    const id = +params.id!;
 
     const [acct] = createResource(() => id, () => getAccountById(id));
     
@@ -30,7 +30,7 @@ export default function EditAccount() {
         <ErrorBoundary fallback={err => <p>Loading error: {err.message}</p>}>
             <Suspense fallback={<p>Loading</p>}>
                 <AccountForm
-                    id={+params.id}
+                    id={id}
                     name={data()!.name}
                     type={data()!.type}
                     currency={data()!.currency}

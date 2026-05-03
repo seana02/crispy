@@ -1,4 +1,3 @@
-import "../styles/newItem.css";
 import AccountForm from "src/components/AccountForm";
 import { submitNewAccount } from "src/stores/accountStore";
 

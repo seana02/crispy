@@ -26,6 +26,8 @@ export function GetTransactionList():Promise<Array<domain.TransactionDTO>>;
 
 export function Greet(arg1:string):Promise<string>;
 
+export function SearchAccount(arg1:string):Promise<Array<domain.AccountDTO>>;
+
 export function SubmitAccount(arg1:any,arg2:domain.AccountDTO):Promise<void>;
 
 export function SubmitTransaction(arg1:any,arg2:domain.TransactionDTO):Promise<void>;

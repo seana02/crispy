@@ -75,10 +75,56 @@ func (t Table) String() string {
 	return ""
 }
 
+type Condition interface {
+	ToSQL() (string, []any)
+}
+
+func NewWhere(c Column, o ComparisonOperator, v string) Where {
+	return Where{Column: c, Op: o, Value: v}
+}
+
 type Where struct {
 	Column Column
 	Op     ComparisonOperator
 	Value  string
+}
+
+func (w Where) ToSQL() (string, []any) {
+	return fmt.Sprintf("(%s %s ?)", w.Column, w.Op), []any{w.Value}
+}
+
+type AndCondition struct {
+	Conditions []Condition
+}
+
+func (c AndCondition) ToSQL() (string, []any) {
+	parts := make([]string, 0, len(c.Conditions))
+	args := []any{}
+
+	for _, cond := range c.Conditions {
+		sql, a := cond.ToSQL()
+		parts = append(parts, sql)
+		args = append(args, a...)
+	}
+
+	return strings.Join(parts, " AND "), args
+}
+
+type OrCondition struct {
+	Conditions []Condition
+}
+
+func (c OrCondition) ToSQL() (string, []any) {
+	parts := make([]string, 0, len(c.Conditions))
+	args := []any{}
+
+	for _, cond := range c.Conditions {
+		sql, a := cond.ToSQL()
+		parts = append(parts, sql)
+		args = append(args, a...)
+	}
+
+	return strings.Join(parts, " OR "), args
 }
 
 type Join struct {
@@ -87,14 +133,15 @@ type Join struct {
 }
 
 type SQLite_Builder struct {
-	Handle    *SQLiteDB
-	table     Table
-	ColumnSet map[Column]bool
-	Columns   []Column
-	Join      *Join
-	Where     []Where
-	OrderBy   []Column
-	Reverse   bool
+	Handle      *SQLiteDB
+	table       Table
+	ColumnSet   map[Column]bool
+	Columns     []Column
+	Join        *Join
+	Where       Condition
+	OrCondition []OrCondition
+	OrderBy     []Column
+	Reverse     bool
 }
 
 type SQLiteDB struct {
@@ -216,8 +263,8 @@ func (s *SQLite_Builder) AddColumns(columns []Column) {
 	}
 }
 
-func (s *SQLite_Builder) AddCondition(c Column, op ComparisonOperator, val string) {
-	s.Where = append(s.Where, Where{c, op, val})
+func (s *SQLite_Builder) SetCondition(c Condition) {
+	s.Where = c
 }
 
 func (s *SQLite_Builder) AddJoin(tableName, condition string) {
@@ -260,7 +307,7 @@ func (s *SQLite_Builder) Insert(ctx context.Context, args ...any) (int64, error)
 	stmt.Write([]byte(valueList.String()))
 	stmt.Write([]byte(")"))
 
-	s.Handle.Logger.Debug("Inserting", "Query", stmt.String())
+	s.Handle.Logger.Debug("Inserting", "Query", stmt.String(), "Args", args)
 	result, err := s.Handle.tx.ExecContext(ctx, stmt.String(), args...)
 	if err != nil {
 		return -1, fmt.Errorf("Insert failed: %w", err)
@@ -277,12 +324,12 @@ func (s *SQLite_Builder) Select(ctx context.Context, page, perPage int, callback
 	stmt.Write([]byte(s.table.String()))
 
 	writeJoin(&stmt, s.Join)
-	writeWhere(&stmt, s.Where)
+	args := writeWhere(&stmt, s.Where)
 	writeOrderBy(&stmt, s.OrderBy, s.Reverse)
 	writePagination(&stmt, page, perPage)
 
-	s.Handle.Logger.Debug("Selecting", "Query", stmt.String())
-	rows, err := s.Handle.db.QueryContext(ctx, stmt.String())
+	s.Handle.Logger.Debug("Selecting", "Query", stmt.String(), "Args", args)
+	rows, err := s.Handle.db.QueryContext(ctx, stmt.String(), args...)
 	if err != nil {
 		return fmt.Errorf("Select failed: %w", err)
 	}
@@ -298,7 +345,7 @@ func (s *SQLite_Builder) Update(ctx context.Context, args ...any) error {
 	if s.Handle.tx == nil {
 		return errors.New("Error updating transaction: no Tx started. Call SQLiteDB.BeginTx")
 	}
-	if len(s.Where) <= 0 {
+	if s.Where == nil {
 		return errors.New("Update requires a WHERE clause")
 	}
 	var columnList strings.Builder
@@ -316,10 +363,10 @@ func (s *SQLite_Builder) Update(ctx context.Context, args ...any) error {
 	stmt.Write([]byte(s.table.String()))
 	stmt.Write([]byte(" SET "))
 	stmt.Write([]byte(columnList.String()))
-	writeWhere(&stmt, s.Where)
+	whereArgs := writeWhere(&stmt, s.Where)
 	fmt.Printf("Query: %+v\nArgs: %v\n", stmt.String(), args)
-	s.Handle.Logger.Debug("Updating", "Query", stmt.String(), "Args", args)
-	_, err := s.Handle.db.ExecContext(ctx, stmt.String(), args...)
+	s.Handle.Logger.Debug("Updating", "Query", stmt.String(), "Args", args, "WhereArgs", whereArgs)
+	_, err := s.Handle.db.ExecContext(ctx, stmt.String(), append(args, whereArgs...)...)
 	if err != nil {
 		return fmt.Errorf("Update failed: %w", err)
 	}
@@ -327,15 +374,15 @@ func (s *SQLite_Builder) Update(ctx context.Context, args ...any) error {
 }
 
 func (s *SQLite_Builder) Delete(ctx context.Context) error {
-	if len(s.Where) <= 0 {
+	if s.Where == nil {
 		return errors.New("Cannot unconditionally delete unless explicitly specified")
 	}
 	var stmt strings.Builder
 	stmt.Write([]byte("DELETE FROM "))
 	stmt.Write([]byte(s.table.String()))
-	writeWhere(&stmt, s.Where)
-	s.Handle.Logger.Debug("Deleting", "Query", stmt.String())
-	_, err := s.Handle.db.ExecContext(ctx, stmt.String())
+	args := writeWhere(&stmt, s.Where)
+	s.Handle.Logger.Debug("Deleting", "Query", stmt.String(), "Args", args)
+	_, err := s.Handle.db.ExecContext(ctx, stmt.String(), args...)
 	if err != nil {
 		return fmt.Errorf("Delete failed: %w", err)
 	}
@@ -351,21 +398,14 @@ func writeJoin(stmt *strings.Builder, join *Join) {
 	}
 }
 
-func writeWhere(stmt *strings.Builder, where []Where) {
-	if len(where) > 0 {
+func writeWhere(stmt *strings.Builder, where Condition) []any {
+	if where != nil {
 		stmt.Write([]byte(" WHERE "))
-		for i, w := range where {
-			if i > 0 {
-				stmt.Write([]byte(" AND "))
-			}
-			stmt.Write([]byte(w.Column.String()))
-			stmt.Write([]byte(" "))
-			stmt.Write([]byte(w.Op.String()))
-			stmt.Write([]byte(" \""))
-			stmt.Write([]byte(w.Value))
-			stmt.Write([]byte("\""))
-		}
+		sql, args := where.ToSQL()
+		stmt.Write([]byte(sql))
+		return args
 	}
+	return nil
 }
 
 func writeOrderBy(stmt *strings.Builder, orderby []Column, reverse bool) {

@@ -142,6 +142,19 @@ func (a *App) GetAccountIDByName(acct string) int64 {
 	return id
 }
 
+func (a *App) SearchAccount(query string) ([]*domain.AccountDTO, error) {
+	accts, err := a.deps.Service.SearchAccount(a.ctx, query)
+	if err != nil {
+		a.deps.Logger.Error("Error searching account", "query", query, "Error", err)
+		return nil, err
+	}
+	output := []*domain.AccountDTO{}
+	for _, acc := range accts {
+		output = append(output, acc.ToDTO())
+	}
+	return output, nil
+}
+
 func (a *App) GetAccountByID(id int64) (*domain.AccountDTO, error) {
 	acct, err := a.deps.Service.GetAccountByID(a.ctx, id)
 	if err != nil {

@@ -119,3 +119,7 @@ select:focus {
 .posting-account-input {
   flex-grow: 1;
 }
+
+input[disabled] {
+  background-color: var(--color-surface);
+}
