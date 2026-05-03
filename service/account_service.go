@@ -61,7 +61,9 @@ func (s *Service) CreateAccount(ctx context.Context, newAccount *domain.Account)
 func (s *Service) GetAllAccounts(ctx context.Context) ([]*domain.Account, error) {
 	const errorMsg = "GetAllAccounts failed: %w"
 	acct_arr, err := s.repo.AccountQueryBuilder().
-		AddCondition(db.Column_Id, db.NotEqual, "0").
+		SetCondition(
+			db.NewWhere(db.Column_Id, db.NotEqual, "0"),
+		).
 		Select(ctx, -1, -1)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, err)
@@ -72,8 +74,12 @@ func (s *Service) GetAllAccounts(ctx context.Context) ([]*domain.Account, error)
 func (s *Service) GetAccountByID(ctx context.Context, id int64) (*domain.Account, error) {
 	const errorMsg = "GetAccountByID for ID %d failed: %w"
 	acct_arr, err := s.repo.AccountQueryBuilder().
-		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(id, 10)).
-		AddCondition(db.Column_Id, db.NotEqual, "0").
+		SetCondition(db.AndCondition{
+			Conditions: []db.Condition{
+				db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(id, 10)),
+				db.NewWhere(db.Column_Id, db.NotEqual, "0"),
+			},
+		}).
 		Select(ctx, 0, 1)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, id, err)
@@ -87,8 +93,12 @@ func (s *Service) GetAccountID(ctx context.Context, accountName string) (int64, 
 	curr_id := ROOT_PARENT_ID
 	for _, next := range accountTree {
 		acct_arr, err := s.repo.AccountQueryBuilder().
-			AddCondition(db.Column_ParentId, db.Equal, strconv.FormatInt(curr_id, 10)).
-			AddCondition(db.Column_Name, db.Equal, next).
+			SetCondition(db.AndCondition{
+				Conditions: []db.Condition{
+					db.NewWhere(db.Column_ParentId, db.Equal, strconv.FormatInt(curr_id, 10)),
+					db.NewWhere(db.Column_Name, db.Equal, next),
+				},
+			}).
 			Select(ctx, 0, 1)
 		if err != nil || len(acct_arr) == 0 {
 			return -9, fmt.Errorf(errorMsg, accountName, err)
@@ -100,11 +110,34 @@ func (s *Service) GetAccountID(ctx context.Context, accountName string) (int64, 
 
 func (s *Service) GetAccountName(ctx context.Context, id int64) (string, error) {
 	const errorMsg = "GetAccountName for ID %d failed: %w"
+	if id <= 0 {
+		return "", fmt.Errorf(errorMsg, id, "invalid ID")
+	}
 	acct, err := s.GetAccountByID(ctx, id)
 	if err != nil {
 		return "", fmt.Errorf(errorMsg, id, err)
 	}
 	return acct.Name(), nil
+}
+
+func (s *Service) SearchAccount(ctx context.Context, query string) ([]*domain.Account, error) {
+	const errorMsg = "SearchAccount for query %s failed: %w"
+	tx_arr, err := s.repo.AccountQueryBuilder().
+		SetCondition(
+			db.AndCondition{Conditions: []db.Condition{
+				db.NewWhere(db.Column_Id, db.NotEqual, "0"),
+				db.OrCondition{Conditions: []db.Condition{
+					db.NewWhere(db.Column_Name, db.Like, query+"%"),
+					db.NewWhere(db.Column_Name, db.Like, "%"+query+"%"),
+					db.NewWhere(db.Column_Name, db.Like, "%"+strings.Join(strings.Split(query, ""), "%")+"%"),
+				}},
+			}},
+		).
+		Select(ctx, 0, 10)
+	if err != nil {
+		return nil, fmt.Errorf(errorMsg, query, err)
+	}
+	return append(tx_arr), nil
 }
 
 func (s *Service) UpdateAccount(ctx context.Context, newAccount *domain.Account) error {
@@ -125,7 +158,9 @@ func (s *Service) UpdateAccount(ctx context.Context, newAccount *domain.Account)
 			db.Column_Active,
 			db.Column_DateUpdated,
 		}).
-		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(newAccount.ID(), 10)).
+		SetCondition(
+			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(newAccount.ID(), 10)),
+		).
 		Update(ctx, newAccount.ParentID(), newAccount.Name(), newAccount.Type(), newAccount.Currency(), newAccount.Description(), newAccount.Active(), now())
 	if err != nil {
 		s.repo.Rollback()
@@ -140,11 +175,16 @@ func (s *Service) UpdateAccount(ctx context.Context, newAccount *domain.Account)
 
 func (s *Service) DeleteAccount(ctx context.Context, accountID int64) error {
 	const errorMsg = "DeleteAccount for ID %d failed: %w"
+	if accountID <= 0 {
+		return fmt.Errorf(errorMsg, accountID, "Invalid ID")
+	}
 	if err := s.repo.BeginTx(ctx); err != nil {
 		return fmt.Errorf(errorMsg, accountID, err)
 	}
 	err := s.repo.AccountQueryBuilder().
-		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(accountID, 10)).
+		SetCondition(
+			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(accountID, 10)),
+		).
 		Delete(ctx)
 	if err != nil {
 		s.repo.Rollback()

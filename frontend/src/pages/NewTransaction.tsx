@@ -1,4 +1,3 @@
-import "../styles/newItem.css";
 import { submitNewTransaction } from "../stores/transactionStore";
 import TransactionForm from "src/components/TransactionForm";
 

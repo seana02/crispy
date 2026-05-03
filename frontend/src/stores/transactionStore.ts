@@ -44,7 +44,7 @@ const submitNewTransaction = async (
         dateUpdated: new Date()
     });
     await CreateTransaction(newDTO);
-    refetch();
+    await refetch();
 }
 
 const submitEditTransaction = async (
@@ -67,14 +67,14 @@ const submitEditTransaction = async (
         dateUpdated: new Date()
     });
     await UpdateTransaction(newDTO);
-    refetch();
+    await refetch();
 }
 
 const getTransactionById = (id: number) => txList.find(i => i.id === id);
 
 const deleteTransactionById = async (id: number) => {
     await DeleteTransaction(id);
-    refetch();
+    await refetch();
 }
 
 export {

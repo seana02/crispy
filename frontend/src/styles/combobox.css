@@ -1,0 +1,12 @@
+[data-scope="combobox"][data-part="root"] {
+  flex-grow: 1;
+}
+
+[data-scope="combobox"][data-part="control"] {
+  display: flex;
+}
+
+[data-scope="combobox"][data-part="input"] {
+  flex-grow: 1;
+}
+

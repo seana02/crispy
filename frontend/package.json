@@ -15,9 +15,12 @@
     "vite-plugin-solid": "^2.3.0"
   },
   "dependencies": {
+    "@ark-ui/solid": "^5.36.2",
+    "@solid-primitives/scheduled": "^1.5.3",
     "@solidjs/router": "^0.15.3",
     "lucide-solid": "^0.553.0",
-    "solid-js": "^1.5.1"
+    "solid-js": "^1.5.1",
+    "solid-primitives": "^0.0.1"
   },
   "author": "seana02"
 }

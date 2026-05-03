@@ -1,5 +1,5 @@
 import { createStore, reconcile } from "solid-js/store";
-import { CreateAccount, DeleteAccount, GetAccountIDByName, GetAccountList, UpdateAccount } from "../../wailsjs/go/main/App";
+import { CreateAccount, DeleteAccount, GetAccountIDByName, GetAccountList, SearchAccount, UpdateAccount } from "../../wailsjs/go/main/App";
 import { domain } from "../../wailsjs/go/models";
 import { createEffect, createResource } from "solid-js";
 
@@ -67,6 +67,8 @@ const deleteAccountById = async (id: number) => {
     refetch();
 }
 
+const searchAccount = async (searchStr: string) => SearchAccount(searchStr);
+
 export {
     acctList,
     submitNewAccount,
@@ -74,5 +76,6 @@ export {
     getAccountById,
     getAccountIdByName,
     deleteAccountById,
+    searchAccount,
 };
 

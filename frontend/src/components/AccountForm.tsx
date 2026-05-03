@@ -2,6 +2,9 @@ import { useNavigate } from "@solidjs/router";
 import { domain } from "../../wailsjs/go/models";
 import { createSignal, For } from "solid-js";
 import { Currency } from "src/stores/currencyStore";
+import "../styles/form.css";
+import Select from "src/components/ark/Select";
+import Checkbox from "src/components/ark/Checkbox";
 
 interface AccountProps {
     id?: number
@@ -66,50 +69,22 @@ export default function AccountForm(props: AccountProps) {
             </div>
 
             <div class="form-group-group">
-                <div class="form-group">
-                    <label for={"account-type-input"}>Type</label>
-                    <div class="select-wrapper">
-                        <select
-                            id="account-type-input"
-                            value={type()}
-                            onChange={e => setType(e.currentTarget.value as domain.Type)}
-                        >
-                            <For each={Object.values(domain.Type)} >
-                                {s => <option value={s}>{s}</option>}
-                            </For>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for={"account-currency-input"}>Currency</label>
-                    <div class="select-wrapper">
-                        <select
-                            id="account-currency-input"
-                            class="account-currency-input"
-                            value={currency()}
-                            onChange={e => setCurrency(e.currentTarget.value)}
-                        >
-                            <For each={Object.values(Currency)} >
-                                {s => <option value={s}>{s}</option>}
-                            </For>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group" style={{ position: "relative" }}>
-                    <label for={"account-active-input"}>Active</label>
-                    <input
-                        style={{ position: "absolute", margin: 0, opacity: 0, "z-index": 2, height: "100%", width: "100%", bottom: 0, cursor: "pointer" }}
-                        id="account-active-input"
-                        type="checkbox"
-                        checked={active()}
-                        onInput={(e) => setActive(e.currentTarget.checked)}
-                    />
-                    <div class="checkmark-visual">
-                        {active() ? <svg viewBox="0 -4 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" clip-rule="evenodd" d="M3.06066 6.4393C2.47487 5.85355 1.52513 5.85355 0.93934 6.4393C0.353553 7.0251 0.353553 7.9749 0.93934 8.5607L7.93934 15.5607C8.52513 16.1464 9.47487 16.1464 10.0607 15.5607L23.0607 2.56066C23.6464 1.97487 23.6464 1.02513 23.0607 0.43934C22.4749 -0.14645 21.5251 -0.14645 20.9393 0.43934L9 12.3787L3.06066 6.4393z"/>
-                        </svg> : <></>}
-                    </div>
-                </div>
+                <Select
+                    label="Type"
+                    value={type()}
+                    list={Object.values(domain.Type).map(t => t.toString())}
+                    onChange={e => setType(e.value[0] as domain.Type)}
+                />
+                <Select
+                    label="Currency"
+                    value={currency()}
+                    list={Object.values(Currency).map(c => c.toString())}
+                    onChange={e => setCurrency(e.value[0])}
+                />
+                <Checkbox
+                    value={active()}
+                    onChange={b => setActive(b)}
+                />
                 <div class="form-group">
                     <label for="transaction-date-created">Date Created</label>
                     <input

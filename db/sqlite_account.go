@@ -28,8 +28,8 @@ func (s *SQLite_AccountBuilder) AddColumns(columns []Column) *SQLite_AccountBuil
 	return s
 }
 
-func (s *SQLite_AccountBuilder) AddCondition(c Column, op ComparisonOperator, val string) *SQLite_AccountBuilder {
-	s.SQLite_Builder.AddCondition(c, op, val)
+func (s *SQLite_AccountBuilder) SetCondition(cond Condition) *SQLite_AccountBuilder {
+	s.SQLite_Builder.SetCondition(cond)
 	return s
 }
 
