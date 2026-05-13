@@ -1,10 +1,13 @@
 import { createSignal, For } from "solid-js";
-import "../styles/newItem.css";
+import "../styles/form.css";
 import { createStore } from "solid-js/store";
 import { domain } from "../../wailsjs/go/models";
 import { useNavigate } from "@solidjs/router";
 import { Currency } from "src/stores/currencyStore";
-import { getAccountIdByName } from "src/stores/accountStore";
+import { getAccountIdByName, searchAccount } from "src/stores/accountStore";
+import DatePicker from "src/components/ark/DatePicker";
+import Select from "src/components/ark/Select";
+import Combobox from "src/components/ark/Combobox";
 
 interface TransactionProps {
     id?: number
@@ -65,33 +68,20 @@ export default function TransactionForm(props: TransactionProps) {
     }
 
     return (
-        <form class="new-item-form" onSubmit={handleSubmit}>
+        <form class="new-item-form" onSubmit={handleSubmit} onKeyDown={(e: KeyboardEvent) => {if (e.key === "Enter") e.preventDefault()}}>
             <h2 class="form-title">{props.id == -1 ? "New" : "Edit"} Transaction</h2>
 
             <div class="form-group-group">
-                <div class="form-group">
-                    <label for="transaction-date-input">Date</label>
-                    <input
-                        id="transaction-date-input"
-                        type="date"
-                        value={date().toLocaleDateString("en-CA")}
-                        onInput={(e) => setDate(new Date(e.currentTarget.value+"T00:00"))}
-                    />
-                </div>
-                <div class="form-group">
-                    <label for="transaction-status-input">Status</label>
-                    <div class="select-wrapper">
-                        <select
-                            id="transaction-status-input"
-                            value={status()}
-                            onChange={e => setStatus(e.currentTarget.value as domain.Status)}
-                        >
-                            <For each={Object.values(domain.Status)} >
-                                {s => <option value={s}>{s}</option>}
-                            </For>
-                        </select>
-                    </div>
-                </div>
+                <DatePicker
+                    value={date()}
+                    onChange={d => setDate(new Date(d.value[0].year, d.value[0].month-1, d.value[0].day))}
+                />
+                <Select
+                    label="Status"
+                    value={status()}
+                    list={Object.values(domain.Status).map(s => s.toString())}
+                    onChange={d => setStatus(d.value[0] as domain.Status)}
+                />
                 <div class="form-group grow">
                     <label for="transaction-description-input">Description</label>
                     <input
@@ -149,30 +139,24 @@ export default function TransactionForm(props: TransactionProps) {
             <For each={postings}>
                 {(p, i) =>
                     <div class="form-posting-row">
-                        <div class="form-group posting-account-input">
-                            <label for={"transaction-account-input-" + i}>Account</label>
-                            <input
-                                id={"transaction-account-input" + i}
-                                type="text"
-                                value={p.account}
-                                onInput={(e) => setPostings(i(), "account", e.target.value)}
-                            />
-                        </div>
-                        <div class="form-group posting-currency-input">
-                            <label for={"transaction-currency-input" + i}>Currency</label>
-                            <div class="select-wrapper">
-                                <select
-                                    id={"transaction-currency-input" + i}
-                                    class="transaction-currency-input"
-                                    value={p.currency}
-                                    onChange={e => setPostings(i(), "currency", e.currentTarget.value)}
-                                >
-                                    <For each={Object.values(Currency)} >
-                                        {s => <option value={s}>{s}</option>}
-                                    </For>
-                                </select>
-                            </div>
-                        </div>
+                        <Combobox
+                            fetchOptions={async (input: string) => {
+                                let accts = await searchAccount(input);
+                                return accts.map(a => a.name);
+                            }}
+                            value={p.account}
+                            onChange={(e) => {
+                                console.log("Updated posting", i(), "to value", e);
+                                setPostings(i(), "account", e);
+                            }}
+                            debounceMs={200}
+                        />
+                        <Select
+                            label="Currency"
+                            value={p.currency}
+                            list={Object.values(Currency).map(s => s.toString())}
+                            onChange={d => setPostings(i(), "currency", d.value[0])}
+                        />
                         <div class="form-group posting-amount-input">
                             <label for={"transaction-amount-input" + i}>Amount</label>
                             <input

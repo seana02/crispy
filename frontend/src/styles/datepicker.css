@@ -1,0 +1,53 @@
+[data-scope='date-picker'] {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+[data-scope='date-picker'][data-part='month-select'],
+[data-scope='date-picker'][data-part='year-select'] {
+  background: none;
+  border: none;
+}
+
+[data-scope='date-picker'][data-part='view-control'] {
+  background: none;
+  display: flex;
+  justify-content: center;
+}
+
+[data-scope='date-picker'][data-part='input'] {
+  width: 80px;
+}
+
+[data-scope='date-picker'][data-part='prev-trigger'],
+[data-scope='date-picker'][data-part='next-trigger'] {
+  background-color: var(--color-bg);
+}
+
+[data-scope='date-picker'][data-part='table-cell'] {
+  text-align: center;
+}
+
+[data-scope='date-picker'][data-part='table-cell-trigger'] {
+  height: 2rem;
+  line-height: 2rem;
+  transition: var(--transition-fast);
+  border-radius: var(--radius-sm);
+}
+
+[data-scope='date-picker'][data-part='table-cell-trigger']:not([data-outside-range]):hover {
+  background-color: var(--color-secondary);
+  transition: var(--transition-fast);
+}
+
+[data-outside-range] {
+  color: var(--color-text-secondary);
+}
+
+[data-scope='date-picker'][data-part='table-header'] {
+  width: 2rem;
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+}
+
+

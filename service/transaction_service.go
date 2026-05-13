@@ -73,7 +73,9 @@ func (s *Service) GetAllTransactions(ctx context.Context, page, perPage int) ([]
 func (s *Service) GetTransactionByID(ctx context.Context, id int64) (*domain.Transaction, error) {
 	const errorMsg = "GetTransactionsByID for ID %d failed: %w"
 	tx_arr, err := s.repo.TransactionQueryBuilder().
-		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(id, 10)).
+		SetCondition(
+			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(id, 10)),
+		).
 		Select(ctx, 0, 1)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, id, err)
@@ -101,7 +103,9 @@ func (s *Service) UpdateTransaction(ctx context.Context, newTransaction *domain.
 			db.Column_Status,
 			db.Column_DateUpdated,
 		}).
-		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(newTransaction.ID(), 10)).
+		SetCondition(
+			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(newTransaction.ID(), 10)),
+		).
 		Update(ctx, newTransaction.Description(), newTransaction.Date(), newTransaction.Status(), now())
 	if err != nil {
 		s.repo.Rollback()
@@ -120,7 +124,9 @@ func (s *Service) DeleteTransaction(ctx context.Context, transactionID int64) er
 		return fmt.Errorf(errorMsg, transactionID, err)
 	}
 	err := s.repo.TransactionQueryBuilder().
-		AddCondition(db.Column_Id, db.Equal, strconv.FormatInt(transactionID, 10)).
+		SetCondition(
+			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(transactionID, 10)),
+		).
 		Delete(ctx)
 	if err != nil {
 		s.repo.Rollback()
@@ -133,12 +139,14 @@ func (s *Service) DeleteTransaction(ctx context.Context, transactionID int64) er
 	return nil
 }
 
-func (s *Service) getPostings(ctx context.Context, transactionId int64) ([]*domain.Posting, error) {
+func (s *Service) getPostings(ctx context.Context, transactionID int64) ([]*domain.Posting, error) {
 	p, err := s.repo.PostingQueryBuilder().
-		AddCondition(db.Column_TransactionId, db.Equal, strconv.FormatInt(transactionId, 10)).
+		SetCondition(
+			db.NewWhere(db.Column_TransactionId, db.Equal, strconv.FormatInt(transactionID, 10)),
+		).
 		Select(ctx, -1, -1)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to get posting %d: %w", transactionId, err)
+		return nil, fmt.Errorf("Failed to get posting %d: %w", transactionID, err)
 	}
 	return p, nil
 }

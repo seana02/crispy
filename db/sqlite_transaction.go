@@ -28,8 +28,8 @@ func (s *SQLite_TransactionBuilder) AddColumns(columns []Column) *SQLite_Transac
 	return s
 }
 
-func (s *SQLite_TransactionBuilder) AddCondition(c Column, op ComparisonOperator, val string) *SQLite_TransactionBuilder {
-	s.SQLite_Builder.AddCondition(c, op, val)
+func (s *SQLite_TransactionBuilder) SetCondition(cond Condition) *SQLite_TransactionBuilder {
+	s.SQLite_Builder.SetCondition(cond)
 	return s
 }
 

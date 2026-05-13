@@ -50,6 +50,10 @@ export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
 }
 
+export function SearchAccount(arg1) {
+  return window['go']['main']['App']['SearchAccount'](arg1);
+}
+
 export function SubmitAccount(arg1, arg2) {
   return window['go']['main']['App']['SubmitAccount'](arg1, arg2);
 }
