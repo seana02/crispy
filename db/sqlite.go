@@ -107,7 +107,7 @@ func (c AndCondition) ToSQL() (string, []any) {
 		args = append(args, a...)
 	}
 
-	return strings.Join(parts, " AND "), args
+	return "(" + strings.Join(parts, " AND ") + ")", args
 }
 
 type OrCondition struct {
@@ -124,7 +124,7 @@ func (c OrCondition) ToSQL() (string, []any) {
 		args = append(args, a...)
 	}
 
-	return strings.Join(parts, " OR "), args
+	return "(" + strings.Join(parts, " OR ") + ")", args
 }
 
 type Join struct {
@@ -364,9 +364,8 @@ func (s *SQLite_Builder) Update(ctx context.Context, args ...any) error {
 	stmt.Write([]byte(" SET "))
 	stmt.Write([]byte(columnList.String()))
 	whereArgs := writeWhere(&stmt, s.Where)
-	fmt.Printf("Query: %+v\nArgs: %v\n", stmt.String(), args)
 	s.Handle.Logger.Debug("Updating", "Query", stmt.String(), "Args", args, "WhereArgs", whereArgs)
-	_, err := s.Handle.db.ExecContext(ctx, stmt.String(), append(args, whereArgs...)...)
+	_, err := s.Handle.tx.ExecContext(ctx, stmt.String(), append(args, whereArgs...)...)
 	if err != nil {
 		return fmt.Errorf("Update failed: %w", err)
 	}
@@ -374,6 +373,9 @@ func (s *SQLite_Builder) Update(ctx context.Context, args ...any) error {
 }
 
 func (s *SQLite_Builder) Delete(ctx context.Context) error {
+	if s.Handle.tx == nil {
+		return errors.New("Error updating transaction: no Tx started. Call SQLiteDB.BeginTx")
+	}
 	if s.Where == nil {
 		return errors.New("Cannot unconditionally delete unless explicitly specified")
 	}
@@ -382,7 +384,7 @@ func (s *SQLite_Builder) Delete(ctx context.Context) error {
 	stmt.Write([]byte(s.table.String()))
 	args := writeWhere(&stmt, s.Where)
 	s.Handle.Logger.Debug("Deleting", "Query", stmt.String(), "Args", args)
-	_, err := s.Handle.db.ExecContext(ctx, stmt.String(), args...)
+	_, err := s.Handle.tx.ExecContext(ctx, stmt.String(), args...)
 	if err != nil {
 		return fmt.Errorf("Delete failed: %w", err)
 	}
