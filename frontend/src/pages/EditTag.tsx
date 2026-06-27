@@ -1,5 +1,5 @@
 import { useParams } from "@solidjs/router";
-import { createMemo, createResource, ErrorBoundary, Suspense } from "solid-js";
+import { createMemo, createResource, ErrorBoundary, Show } from "solid-js";
 import TagForm from "src/components/TagForm";
 import { getTagById, submitEditTag } from "src/stores/tagStore";
 
@@ -22,13 +22,13 @@ export default function EditTag() {
 
     return (
         <ErrorBoundary fallback={err => <p>Loading error: {err.message}</p>}>
-            <Suspense fallback={<p>Loading</p>}>
+            <Show when={tag()} fallback={<p>Loading</p>}>
                 <TagForm
                     id={id}
                     name={data()!.name}
                     submit={(name) => submitEditTag(id, name)}
                 />
-            </Suspense>
+            </Show>
         </ErrorBoundary>
     );
 }

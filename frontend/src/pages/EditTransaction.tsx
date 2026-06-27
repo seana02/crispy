@@ -1,4 +1,4 @@
-import { createMemo, createResource, ErrorBoundary, Suspense } from "solid-js";
+import { createMemo, createResource, ErrorBoundary, Show } from "solid-js";
 import { submitEditTransaction, getTransactionById } from "src/stores/transactionStore";
 import { domain } from "wailsjs/go/models";
 import { useParams } from "@solidjs/router";
@@ -28,7 +28,7 @@ export default function EditTransaction() {
 
     return (
         <ErrorBoundary fallback={err => <p>Loading error: {err.message}</p>}>
-            <Suspense fallback={<p>Loading...</p>}>
+            <Show when={data()} fallback={<p>Loading...</p>}>
                 <TransactionForm
                     id={id}
                     description={data()!.description}
@@ -53,7 +53,7 @@ export default function EditTransaction() {
                         return submitEditTransaction(id, desc, date, status, tags, postingsDTO);
                     }}
                 />
-            </Suspense>
+            </Show>
         </ErrorBoundary>
     );
 }

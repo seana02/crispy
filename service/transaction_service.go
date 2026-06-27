@@ -58,36 +58,19 @@ func (s *Service) CreateTransaction(ctx context.Context, newTransaction *domain.
 
 func (s *Service) GetAllTransactions(ctx context.Context, page, perPage int) ([]*domain.Transaction, error) {
 	const errorMsg = "GetAllTransactions failed: %w"
-	
-	// Transaction shell
+
 	tx_arr, err := s.repo.TransactionQueryBuilder().
 		Select(ctx, page, perPage)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, err)
 	}
 
-
-	for _, tx := range tx_arr {
-		// Tags
-		t, err := s.getTags(ctx, tx.ID())
-		if err != nil {
-			return nil, fmt.Errorf(errorMsg, err)
-		}
-		tx.SetTags(t)
-
-		// Postings
-		p, err := s.getPostings(ctx, tx.ID())
-		if err != nil {
-			return nil, fmt.Errorf(errorMsg, err)
-		}
-		tx.SetPostings(p)
-	}
 	return tx_arr, nil
 }
 
-func (s *Service) GetTransactionByID(ctx context.Context, id int64) (*domain.Transaction, error) {
+func (s *Service) GetTransactionByID(ctx context.Context, id int64, includeFullData bool) (*domain.Transaction, error) {
 	const errorMsg = "GetTransactionsByID for ID %d failed: %w"
-	// Transaction\
+
 	tx_arr, err := s.repo.TransactionQueryBuilder().
 		SetCondition(
 			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(id, 10)),
@@ -97,20 +80,26 @@ func (s *Service) GetTransactionByID(ctx context.Context, id int64) (*domain.Tra
 		return nil, fmt.Errorf(errorMsg, id, err)
 	}
 
-	// Tags
+	if !includeFullData {
+		return tx_arr[0], nil
+	}
+
 	t, err := s.getTags(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf(errorMsg, err)
+		return nil, fmt.Errorf(errorMsg, id, err)
 	}
 	tx_arr[0].SetTags(t)
 
-	// Posting
 	p, err := s.getPostings(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, id, err)
 	}
 	tx_arr[0].SetPostings(p)
 	return tx_arr[0], nil
+}
+
+func (s *Service) GetTransactionPostings(ctx context.Context, id int64) ([]*domain.Posting, error) {
+	return s.getPostings(ctx, id)
 }
 
 func (s *Service) UpdateTransaction(ctx context.Context, newTransaction *domain.Transaction) error {
