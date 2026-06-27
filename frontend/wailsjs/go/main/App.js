@@ -22,6 +22,10 @@ export function DeleteAccount(arg1) {
   return window['go']['main']['App']['DeleteAccount'](arg1);
 }
 
+export function DeleteTag(arg1) {
+  return window['go']['main']['App']['DeleteTag'](arg1);
+}
+
 export function DeleteTransaction(arg1) {
   return window['go']['main']['App']['DeleteTransaction'](arg1);
 }
@@ -36,6 +40,10 @@ export function GetAccountIDByName(arg1) {
 
 export function GetAccountList() {
   return window['go']['main']['App']['GetAccountList']();
+}
+
+export function GetTagList() {
+  return window['go']['main']['App']['GetTagList']();
 }
 
 export function GetTransactionByID(arg1) {
@@ -58,12 +66,12 @@ export function SubmitAccount(arg1, arg2) {
   return window['go']['main']['App']['SubmitAccount'](arg1, arg2);
 }
 
-export function SubmitTransaction(arg1, arg2) {
-  return window['go']['main']['App']['SubmitTransaction'](arg1, arg2);
-}
-
 export function UpdateAccount(arg1) {
   return window['go']['main']['App']['UpdateAccount'](arg1);
+}
+
+export function UpdateTag(arg1, arg2) {
+  return window['go']['main']['App']['UpdateTag'](arg1, arg2);
 }
 
 export function UpdateTransaction(arg1) {

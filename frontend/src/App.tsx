@@ -1,15 +1,17 @@
 import { Route, Router } from '@solidjs/router';
 
-import PageLayout from "./components/layouts/PageLayout";
-import Dashboard from "./pages/Dashboard";
-import Transactions from "./pages/Transactions";
-import NewTransaction from "./pages/NewTransaction";
-import EditTransaction from "./pages/EditTransaction";
-import Budgets from "./pages/Budgets";
-import Accounts from "./pages/Accounts";
-import NewAccount from "./pages/NewAccount";
-import Settings from "./pages/Settings";
+import PageLayout from "src/components/layouts/PageLayout";
+import Dashboard from "src/pages/Dashboard";
+import Transactions from "src/pages/Transactions";
+import NewTransaction from "src/pages/NewTransaction";
+import EditTransaction from "src/pages/EditTransaction";
+import Budgets from "src/pages/Budgets";
+import Accounts from "src/pages/Accounts";
+import NewAccount from "src/pages/NewAccount";
+import Settings from "src/pages/Settings";
 import EditAccount from 'src/pages/EditAccount';
+import Tags from 'src/pages/Tags';
+import EditTag from 'src/pages/EditTag';
 
 export default function App() {
     return (
@@ -25,6 +27,10 @@ export default function App() {
                 <Route path="/" component={Accounts} />
                 <Route path="/add" component={NewAccount} />
                 <Route path="/:id" component={EditAccount} />
+            </Route>
+            <Route path="/tags">
+                <Route path="/" component={Tags} />
+                <Route path="/:id" component={EditTag} />
             </Route>
             <Route path="/settings" component={Settings} />
         </Router>

@@ -11,4 +11,6 @@ type Repository interface {
 	TransactionQueryBuilder() *SQLite_TransactionBuilder
 	AccountQueryBuilder() *SQLite_AccountBuilder
 	PostingQueryBuilder() *SQLite_PostingBuilder
+	TagQueryBuilder() *SQLite_TagBuilder
+	TransactionTagsQueryBuilder() *SQLite_TransactionTagsBuilder
 }

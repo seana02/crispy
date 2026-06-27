@@ -1,6 +1,6 @@
 import { createSignal, For } from "solid-js";
 import { useNavigate } from "@solidjs/router";
-import "../styles/lists.css";
+import "src/styles/lists.css";
 import { acctList, deleteAccountById } from "src/stores/accountStore";
 import { PencilLine, Trash2 } from "lucide-solid";
 import ConfirmationPopup from "src/components/ConfirmationPopup";
@@ -24,9 +24,9 @@ export default function Accounts() {
                             <button class="list-row-button list-row-edit" onClick={() => navigate("/accounts/"+data.id)}>
                                 <PencilLine class="svg-small" />
                             </button>
-                                <button class="list-row-button list-row-delete" onClick={() => setDeleteConfirmID(i())}>
-                                    <Trash2 class="svg-small" />
-                                </button>
+                            <button class="list-row-button list-row-delete" onClick={() => setDeleteConfirmID(i())}>
+                                <Trash2 class="svg-small" />
+                            </button>
                             <ConfirmationPopup isOpen={deleteConfirmation() == i()} onClose={() => setDeleteConfirmID(-1)}>
                                 <div class="popup-text">Are you sure you want to delete the following Account?</div>
                                 <div style={{ height: "8px" }} />

@@ -1,7 +1,7 @@
 import { ParentProps, Show, children } from "solid-js";
 import { Portal } from "solid-js/web";
 
-import "../styles/globals.css";
+import "src/styles/globals.css";
 
 interface ConfirmationPopupProps {
     isOpen: boolean;

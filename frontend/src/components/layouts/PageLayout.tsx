@@ -1,6 +1,6 @@
 import type { JSX } from "solid-js";
-import Sidebar from "./Sidebar";
-import Topbar from "./Topbar";
+import Sidebar from "src/components/layouts/Sidebar";
+import Topbar from "src/components/layouts/Topbar";
 import { RouteSectionProps } from "@solidjs/router";
 
 export default function PageLayout(props: RouteSectionProps) {

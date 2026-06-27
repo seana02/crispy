@@ -33,7 +33,7 @@ func (s *SQLite_TransactionBuilder) SetCondition(cond Condition) *SQLite_Transac
 	return s
 }
 
-func (s *SQLite_TransactionBuilder) AddJoin(tableName, condition string) *SQLite_TransactionBuilder {
+func (s *SQLite_TransactionBuilder) AddJoin(tableName Table, condition string) *SQLite_TransactionBuilder {
 	s.SQLite_Builder.AddJoin(tableName, condition)
 	return s
 }
@@ -52,8 +52,8 @@ func (s *SQLite_TransactionBuilder) Select(ctx context.Context, page, perPage in
 	var dateCreated, dateUpdated time.Time
 
 	var ts []*domain.Transaction
-	callback := func(rows *sql.Rows) error {
-		err := rows.Scan(
+	callback := func(nextRow *sql.Rows) error {
+		err := nextRow.Scan(
 			&id, &description, &date, &status, &referenceID, &dateCreated, &dateUpdated,
 		)
 		if err != nil {

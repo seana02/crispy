@@ -1,7 +1,7 @@
 import { Checkbox as ArkCheckbox, CheckboxCheckedState } from '@ark-ui/solid'
 import { CheckIcon } from 'lucide-solid'
 import { createSignal } from 'solid-js'
-import '../../styles/form.css';
+import 'src/styles/form.css';
 
 interface CheckboxProps {
     value: boolean

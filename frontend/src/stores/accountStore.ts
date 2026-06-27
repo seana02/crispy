@@ -1,6 +1,6 @@
 import { createStore, reconcile } from "solid-js/store";
-import { CreateAccount, DeleteAccount, GetAccountIDByName, GetAccountList, SearchAccount, UpdateAccount } from "../../wailsjs/go/main/App";
-import { domain } from "../../wailsjs/go/models";
+import { CreateAccount, DeleteAccount, GetAccountIDByName, GetAccountList, SearchAccount, UpdateAccount } from "wailsjs/go/main/App";
+import { domain } from "wailsjs/go/models";
 import { createEffect, createResource } from "solid-js";
 
 const [acctList, setAcctList] = createStore<domain.AccountDTO[]>([]);
@@ -20,19 +20,23 @@ const submitNewAccount = async (
     currency: string,
     active: boolean,
 ) => {
-    let newDTO = domain.AccountDTO.createFrom({
-        id: -1,
-        parentID: -1,
-        name,
-        type,
-        currency,
-        description,
-        active,
-        dateCreated: new Date(),
-        dateUpdated: new Date()
-    });
-    await CreateAccount(newDTO);
-    refetch();
+    try {
+        let newDTO = domain.AccountDTO.createFrom({
+            id: -1,
+            parentID: -1,
+            name,
+            type,
+            currency,
+            description,
+            active,
+            dateCreated: new Date(),
+            dateUpdated: new Date()
+        });
+        await CreateAccount(newDTO);
+        await refetch();
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 const submitEditAccount = async (
@@ -44,27 +48,35 @@ const submitEditAccount = async (
     currency: string,
     active: boolean,
 ) => {
-    let newDTO = domain.AccountDTO.createFrom({
-        id,
-        parentID,
-        name,
-        type,
-        currency,
-        description,
-        active,
-        dateCreated: new Date(),
-        dateUpdated: new Date(),
-    });
-    await UpdateAccount(newDTO);
-    refetch();
+    try {
+        let newDTO = domain.AccountDTO.createFrom({
+            id,
+            parentID,
+            name,
+            type,
+            currency,
+            description,
+            active,
+            dateCreated: new Date(),
+            dateUpdated: new Date(),
+        });
+        await UpdateAccount(newDTO);
+        await refetch();
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 const getAccountById = (id: number) => acctList.find(i => i.id === id);
 const getAccountIdByName = async (name: string) => GetAccountIDByName(name);
 
 const deleteAccountById = async (id: number) => {
-    await DeleteAccount(id);
-    refetch();
+    try {
+        await DeleteAccount(id);
+        await refetch();
+    } catch (err) {
+        console.log(err);
+    }
 }
 
 const searchAccount = async (searchStr: string) => SearchAccount(searchStr);

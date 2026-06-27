@@ -1,6 +1,6 @@
 import { createMemo, createResource, ErrorBoundary, Suspense } from "solid-js";
-import { submitEditTransaction, getTransactionById } from "../stores/transactionStore";
-import { domain } from "../../wailsjs/go/models";
+import { submitEditTransaction, getTransactionById } from "src/stores/transactionStore";
+import { domain } from "wailsjs/go/models";
 import { useParams } from "@solidjs/router";
 import TransactionForm from "src/components/TransactionForm";
 

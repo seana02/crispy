@@ -1,4 +1,4 @@
-import { submitNewTransaction } from "../stores/transactionStore";
+import { submitNewTransaction } from "src/stores/transactionStore";
 import TransactionForm from "src/components/TransactionForm";
 
 export default function NewTransaction() {

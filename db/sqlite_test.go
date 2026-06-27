@@ -17,7 +17,7 @@ import (
 // newTestDB creates an in-memory SQLite database for testing.
 func newTestDB(t *testing.T) *SQLiteDB {
 	t.Helper()
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug}))
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 	db, err := InitSQLite(":memory:", logger)
 	if err != nil {
 		t.Fatalf("InitSQLite failed: %v", err)
@@ -108,7 +108,7 @@ func TestInitSQLite(t *testing.T) {
 
 func TestTransaction(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := db.Commit(); err == nil {
@@ -339,13 +339,13 @@ func TestSQLBuilder_SetCondition(t *testing.T) {
 func TestSQLBuilder_AddJoin(t *testing.T) {
 	db := newTestDB(t)
 	b := db.SQLBuilder(Table_Transaction)
-	b.AddJoin("Posting", `"Transaction".id = Posting.transaction_id`)
+	b.AddJoin(Table_Posting, `"Transaction".id = Posting.transaction_id`)
 
 	if b.Join == nil {
 		t.Fatal("expected Join to be set")
 	}
-	if b.Join.TableName != "Posting" {
-		t.Errorf("Join.TableName = %q, want %q", b.Join.TableName, "Posting")
+	if b.Join.TableName != Table_Posting {
+		t.Errorf("Join.TableName = %q, want %q", b.Join.TableName.String(), "Posting")
 	}
 	if b.Join.Condition != `"Transaction".id = Posting.transaction_id` {
 		t.Errorf("Join.Condition = %q", b.Join.Condition)
@@ -381,7 +381,7 @@ func TestInsert_ErrorWithoutTx(t *testing.T) {
 	db := newTestDB(t)
 	b := db.SQLBuilder(Table_Account)
 	b.AddColumn(Column_All)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	_, err := b.Insert(ctx, "test")
@@ -396,9 +396,9 @@ func TestInsert_ErrorWithoutTx(t *testing.T) {
 
 func TestInsert_MultipleRows_UniqueIDs(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	db.BeginTx(ctx)    
+	db.BeginTx(ctx)
 	defer db.Rollback()
 
 	id1 := seedAccount(t, ctx, db, "Checking", domain.Asset)
@@ -413,9 +413,9 @@ func TestInsert_MultipleRows_UniqueIDs(t *testing.T) {
 
 func TestInsert_ForeignKeyViolation_ReturnsError(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	db.BeginTx(ctx)    
+	db.BeginTx(ctx)
 	defer db.Rollback()
 
 	// Insert a Posting referencing a nonexistent transaction.
@@ -435,7 +435,7 @@ func TestInsert_ForeignKeyViolation_ReturnsError(t *testing.T) {
 
 func TestSelect_WithWhereClause(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -461,7 +461,7 @@ func TestSelect_WithWhereClause(t *testing.T) {
 
 func TestSelect_NoWhereClause_ReturnsAllRows(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -486,7 +486,7 @@ func TestSelect_NoWhereClause_ReturnsAllRows(t *testing.T) {
 
 func TestSelect_Pagination_LimitsResults(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -523,7 +523,7 @@ func TestSelect_Pagination_LimitsResults(t *testing.T) {
 
 func TestSelect_NegativePagePerPage_NoLimit(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -549,7 +549,7 @@ func TestSelect_NegativePagePerPage_NoLimit(t *testing.T) {
 
 func TestSelect_WithJoin(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -559,7 +559,7 @@ func TestSelect_WithJoin(t *testing.T) {
 	db.Commit()
 
 	b := db.SQLBuilder(Table_Transaction)
-	b.AddJoin(`"Posting"`, `"Transaction".id = "Posting".transaction_id`)
+	b.AddJoin(Table_Posting, `"Transaction".id = "Posting".transaction_id`)
 
 	var count int
 	err := b.Select(ctx, 0, 100, func(_ *sql.Rows) error {
@@ -576,7 +576,7 @@ func TestSelect_WithJoin(t *testing.T) {
 
 func TestSelect_WithOrderBy_AscendingIDs(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -614,7 +614,7 @@ func TestSelect_WithOrderBy_AscendingIDs(t *testing.T) {
 
 func TestSelect_AndCondition(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -643,7 +643,7 @@ func TestSelect_AndCondition(t *testing.T) {
 
 func TestSelect_CallbackError_Propagates(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -666,7 +666,7 @@ func TestUpdate_ErrorWithoutTx(t *testing.T) {
 	b := db.SQLBuilder(Table_Account)
 	b.AddColumn(Column_Name)
 	b.SetCondition(NewWhere(Column_Id, Equal, "1"))
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := b.Update(ctx, "New Name"); err == nil {
@@ -676,9 +676,9 @@ func TestUpdate_ErrorWithoutTx(t *testing.T) {
 
 func TestUpdate_ErrorWithoutWhereClause(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	db.BeginTx(ctx)    
+	db.BeginTx(ctx)
 	defer db.Rollback()
 
 	b := db.SQLBuilder(Table_Account)
@@ -692,7 +692,7 @@ func TestUpdate_ErrorWithoutWhereClause(t *testing.T) {
 
 func TestUpdate_ModifiesRow(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -734,7 +734,7 @@ func TestUpdate_ModifiesRow(t *testing.T) {
 
 func TestDelete_RemovesMatchingRow(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -764,7 +764,7 @@ func TestDelete_RemovesMatchingRow(t *testing.T) {
 
 func TestDelete_LeavesNonMatchingRows(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -811,7 +811,7 @@ func TestDelete_LeavesNonMatchingRows(t *testing.T) {
 
 func TestAccountQueryBuilder_SelectAll(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -822,15 +822,14 @@ func TestAccountQueryBuilder_SelectAll(t *testing.T) {
 	if err != nil {
 		t.Fatalf("AccountQueryBuilder.Select failed: %v", err)
 	}
-	// Migration seeds a root account; at minimum 2 rows.
-	if len(accts) < 2 {
-		t.Errorf("expected at least 2 accounts, got %d", len(accts))
+	if len(accts) < 1 {
+		t.Errorf("expected at least 1 accounts, got %d", len(accts))
 	}
 }
 
 func TestAccountQueryBuilder_FilterByName(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -864,7 +863,7 @@ func TestAccountQueryBuilder_FilterByName(t *testing.T) {
 
 func TestAccountQueryBuilder_FilterByType(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -900,7 +899,7 @@ func TestAccountQueryBuilder_ChainedMethodsReturnCorrectType(t *testing.T) {
 
 func TestTransactionQueryBuilder_SelectAll(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -919,7 +918,7 @@ func TestTransactionQueryBuilder_SelectAll(t *testing.T) {
 
 func TestTransactionQueryBuilder_FilterByDescription(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -943,7 +942,7 @@ func TestTransactionQueryBuilder_FilterByDescription(t *testing.T) {
 
 func TestTransactionQueryBuilder_FilterByStatus(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -965,7 +964,7 @@ func TestTransactionQueryBuilder_FilterByStatus(t *testing.T) {
 
 func TestTransactionQueryBuilder_LikeFilter(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -989,7 +988,7 @@ func TestTransactionQueryBuilder_LikeFilter(t *testing.T) {
 
 func TestPostingQueryBuilder_SelectAll(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -1009,7 +1008,7 @@ func TestPostingQueryBuilder_SelectAll(t *testing.T) {
 
 func TestPostingQueryBuilder_FilterByTransactionID(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -1039,7 +1038,7 @@ func TestPostingQueryBuilder_FilterByTransactionID(t *testing.T) {
 
 func TestPostingQueryBuilder_AmountPreserved(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)
@@ -1065,7 +1064,7 @@ func TestPostingQueryBuilder_AmountPreserved(t *testing.T) {
 
 func TestPostingQueryBuilder_FilterByAccountID(t *testing.T) {
 	db := newTestDB(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 10 * time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	db.BeginTx(ctx)

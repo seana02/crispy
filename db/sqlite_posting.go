@@ -35,7 +35,7 @@ func (s *SQLite_PostingBuilder) SetCondition(cond Condition) *SQLite_PostingBuil
 	return s
 }
 
-func (s *SQLite_PostingBuilder) AddJoin(tableName, condition string) *SQLite_PostingBuilder {
+func (s *SQLite_PostingBuilder) AddJoin(tableName Table, condition string) *SQLite_PostingBuilder {
 	s.SQLite_Builder.AddJoin(tableName, condition)
 	return s
 }
@@ -54,8 +54,8 @@ func (s *SQLite_PostingBuilder) Select(ctx context.Context, page, perPage int) (
 	var dateCreated, dateUpdated time.Time
 
 	var ps []*domain.Posting
-	callback := func(rows *sql.Rows) error {
-		err := rows.Scan(
+	callback := func(nextRow *sql.Rows) error {
+		err := nextRow.Scan(
 			&id, &transactionID, &accountID, &amount, &currency, &dateCreated, &dateUpdated,
 		)
 		if err != nil {

@@ -1,7 +1,7 @@
 import { createSignal, For } from "solid-js";
-import "../styles/form.css";
+import "src/styles/form.css";
 import { createStore } from "solid-js/store";
-import { domain } from "../../wailsjs/go/models";
+import { domain } from "wailsjs/go/models";
 import { useNavigate } from "@solidjs/router";
 import { Currency } from "src/stores/currencyStore";
 import { getAccountIdByName, searchAccount } from "src/stores/accountStore";
@@ -62,7 +62,11 @@ export default function TransactionForm(props: TransactionProps) {
         })
         await Promise.all(accountIDPromises);
         if (!failed) {
-            props.submit(description(), date(), status(), tags().split(" "), postings)
+            let tagList = tags().split(" ");
+            if (tagList.length == 1 && tagList[0] == "") {
+                tagList = [];
+            }
+            props.submit(description(), date(), status(), tagList, postings)
                 .then(() => navigate("/transactions"));
         }
     }

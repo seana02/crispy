@@ -19,6 +19,7 @@ const (
 	Column_TransactionId
 	Column_AccountId
 	Column_Amount
+	Column_TagId
 )
 
 func (c Column) String() string {
@@ -55,6 +56,8 @@ func (c Column) String() string {
 		return "account_id"
 	case Column_Amount:
 		return "amount"
+	case Column_TagId:
+		return "tag_id"
 	}
 	return ""
 }

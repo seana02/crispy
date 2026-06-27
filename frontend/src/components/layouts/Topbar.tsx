@@ -1,7 +1,7 @@
 // import Palette from "lucide-solid/icons/palette";
 import { Palette } from "lucide-solid";
-import { theme, toggleTheme } from "../../stores/themeStore";
-import "../../styles/topbar.css";
+import { theme, toggleTheme } from "src/stores/themeStore";
+import "src/styles/topbar.css";
 
 export default function Topbar() {
     return (

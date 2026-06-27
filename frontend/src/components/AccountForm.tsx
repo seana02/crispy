@@ -1,8 +1,8 @@
 import { useNavigate } from "@solidjs/router";
-import { domain } from "../../wailsjs/go/models";
-import { createSignal, For } from "solid-js";
+import { domain } from "wailsjs/go/models";
+import { createSignal } from "solid-js";
 import { Currency } from "src/stores/currencyStore";
-import "../styles/form.css";
+import "src/styles/form.css";
 import Select from "src/components/ark/Select";
 import Checkbox from "src/components/ark/Checkbox";
 
@@ -22,7 +22,7 @@ interface AccountProps {
 export default function AccountForm(props: AccountProps) {
     const navigate = useNavigate();
 
-    const [name, setName] = createSignal(props.name || "")
+    const [name, setName] = createSignal(props.name || "");
     const [description, setDescription] = createSignal(props.description || "");
     const [type, setType] = createSignal(props.type || domain.Type.Asset)
     const [currency, setCurrency] = createSignal(props.currency || "USD");

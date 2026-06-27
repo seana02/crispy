@@ -12,6 +12,8 @@ export function CreateTransactionSample(arg1:domain.TransactionDTO):Promise<numb
 
 export function DeleteAccount(arg1:number):Promise<void>;
 
+export function DeleteTag(arg1:number):Promise<void>;
+
 export function DeleteTransaction(arg1:number):Promise<void>;
 
 export function GetAccountByID(arg1:number):Promise<domain.AccountDTO>;
@@ -19,6 +21,8 @@ export function GetAccountByID(arg1:number):Promise<domain.AccountDTO>;
 export function GetAccountIDByName(arg1:string):Promise<number>;
 
 export function GetAccountList():Promise<Array<domain.AccountDTO>>;
+
+export function GetTagList():Promise<Array<domain.Tag>>;
 
 export function GetTransactionByID(arg1:number):Promise<domain.TransactionDTO>;
 
@@ -30,8 +34,8 @@ export function SearchAccount(arg1:string):Promise<Array<domain.AccountDTO>>;
 
 export function SubmitAccount(arg1:any,arg2:domain.AccountDTO):Promise<void>;
 
-export function SubmitTransaction(arg1:any,arg2:domain.TransactionDTO):Promise<void>;
-
 export function UpdateAccount(arg1:domain.AccountDTO):Promise<void>;
+
+export function UpdateTag(arg1:number,arg2:string):Promise<void>;
 
 export function UpdateTransaction(arg1:domain.TransactionDTO):Promise<void>;

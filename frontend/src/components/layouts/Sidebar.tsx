@@ -1,12 +1,7 @@
 import { createSignal, For } from "solid-js";
 import { A, useLocation } from "@solidjs/router";
-import "../../styles/sidebar.css";
-import { Banknote, House, Menu, PiggyBank, Settings, Wallet } from "lucide-solid";
-// import Menu from "lucide-solid/icons/menu";
-// import House from "lucide-solid/icons/house";
-// import Banknote from "lucide-solid/icons/banknote";
-// import PiggyBank from "lucide-solid/icons/piggy-bank";
-// import Settings from "lucide-solid/icons/settings";
+import "src/styles/sidebar.css";
+import { Banknote, House, Menu, PiggyBank, Settings, Tag, Wallet } from "lucide-solid";
 
 export default function Sidebar() {
     const [collapsed, setCollapsed] = createSignal(false);
@@ -17,6 +12,7 @@ export default function Sidebar() {
         { href: "/transactions", label: "Transactions", icon: <Banknote color="var(--color-text-primary)" /> },
         { href: "/budgets", label: "Budgets", icon: <PiggyBank color="var(--color-text-primary)" /> },
         { href: "/accounts", label: "Accounts", icon: <Wallet color="var(--color-text-primary)" /> },
+        { href: "/tags", label: "Tags", icon: <Tag color="var(--color-text-primary)" /> },
         { href: "/settings", label: "Settings", icon: <Settings color="var(--color-text-primary)" /> },
     ];
 

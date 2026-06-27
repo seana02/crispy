@@ -1,6 +1,6 @@
 import { createSignal, createEffect, createMemo, on, For } from "solid-js"
 import { Combobox as ArkCombobox, createListCollection } from "@ark-ui/solid"
-import '../../styles/combobox.css';
+import 'src/styles/combobox.css';
 
 function debounce<T extends (...args: any[]) => void>(fn: T, ms: number): T {
     let timer: ReturnType<typeof setTimeout>

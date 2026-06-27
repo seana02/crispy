@@ -85,6 +85,20 @@ export namespace domain {
 		    return a;
 		}
 	}
+	export class Tag {
+	    id: number;
+	    name: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Tag(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	    }
+	}
 	export class TransactionDTO {
 	    id: number;
 	    description: string;

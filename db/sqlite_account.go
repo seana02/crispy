@@ -33,7 +33,7 @@ func (s *SQLite_AccountBuilder) SetCondition(cond Condition) *SQLite_AccountBuil
 	return s
 }
 
-func (s *SQLite_AccountBuilder) AddJoin(tableName, condition string) *SQLite_AccountBuilder {
+func (s *SQLite_AccountBuilder) AddJoin(tableName Table, condition string) *SQLite_AccountBuilder {
 	s.SQLite_Builder.AddJoin(tableName, condition)
 	return s
 }
@@ -53,9 +53,18 @@ func (s *SQLite_AccountBuilder) Select(ctx context.Context, page, perPage int) (
 	var active bool
 	var dateCreated, dateUpdated time.Time
 
+	if s.Where == nil {
+		s.SetCondition(NewWhere(Column_Id, NotEqual, "0"))
+	} else {
+		s.SetCondition(AndCondition{Conditions: []Condition{
+			s.Where,
+			NewWhere(Column_Id, NotEqual, "0"),
+		}})
+	}
+
 	var accts []*domain.Account
-	callback := func(rows *sql.Rows) error {
-		err := rows.Scan(
+	callback := func(nextRow *sql.Rows) error {
+		err := nextRow.Scan(
 			&id, &parentID, &name, &type_, &currency, &description, &active, &dateCreated, &dateUpdated,
 		)
 		if err != nil {

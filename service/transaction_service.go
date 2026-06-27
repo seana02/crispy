@@ -14,9 +14,12 @@ func (s *Service) CreateTransaction(ctx context.Context, newTransaction *domain.
 	if err := newTransaction.Validate(); err != nil {
 		return fmt.Errorf(errorMsg, err)
 	}
+
 	if err := s.repo.BeginTx(ctx); err != nil {
 		return fmt.Errorf(errorMsg, err)
 	}
+
+	// Transaction
 	lastId, err := s.repo.TransactionQueryBuilder().
 		AddColumns([]db.Column{
 			db.Column_Description,
@@ -30,37 +33,49 @@ func (s *Service) CreateTransaction(ctx context.Context, newTransaction *domain.
 		s.repo.Rollback()
 		return fmt.Errorf(errorMsg, err)
 	}
-	for _, p := range newTransaction.Postings() {
-		_, err := s.repo.PostingQueryBuilder().
-			AddColumns([]db.Column{
-				db.Column_TransactionId,
-				db.Column_AccountId,
-				db.Column_Amount,
-				db.Column_Currency,
-				db.Column_DateCreated,
-				db.Column_DateUpdated,
-			}).
-			Insert(ctx, lastId, p.AccountID(), p.Amount(), p.Currency(), time.Now(), time.Now())
-		if err != nil {
+
+	// Tags
+	for _, tag := range newTransaction.Tags() {
+		if err := s.insertTag(ctx, tag); err != nil {
 			s.repo.Rollback()
 			return fmt.Errorf(errorMsg, err)
 		}
 	}
+
+	// Postings
+	if err := s.addPostings(ctx, newTransaction.Postings(), lastId); err != nil {
+		s.repo.Rollback()
+		return fmt.Errorf(errorMsg, err)
+	}
+
 	if err := s.repo.Commit(); err != nil {
 		s.repo.Rollback()
 		return fmt.Errorf(errorMsg, err)
 	}
+
 	return nil
 }
 
 func (s *Service) GetAllTransactions(ctx context.Context, page, perPage int) ([]*domain.Transaction, error) {
 	const errorMsg = "GetAllTransactions failed: %w"
+	
+	// Transaction shell
 	tx_arr, err := s.repo.TransactionQueryBuilder().
 		Select(ctx, page, perPage)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, err)
 	}
+
+
 	for _, tx := range tx_arr {
+		// Tags
+		t, err := s.getTags(ctx, tx.ID())
+		if err != nil {
+			return nil, fmt.Errorf(errorMsg, err)
+		}
+		tx.SetTags(t)
+
+		// Postings
 		p, err := s.getPostings(ctx, tx.ID())
 		if err != nil {
 			return nil, fmt.Errorf(errorMsg, err)
@@ -72,6 +87,7 @@ func (s *Service) GetAllTransactions(ctx context.Context, page, perPage int) ([]
 
 func (s *Service) GetTransactionByID(ctx context.Context, id int64) (*domain.Transaction, error) {
 	const errorMsg = "GetTransactionsByID for ID %d failed: %w"
+	// Transaction\
 	tx_arr, err := s.repo.TransactionQueryBuilder().
 		SetCondition(
 			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(id, 10)),
@@ -80,6 +96,15 @@ func (s *Service) GetTransactionByID(ctx context.Context, id int64) (*domain.Tra
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, id, err)
 	}
+
+	// Tags
+	t, err := s.getTags(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf(errorMsg, err)
+	}
+	tx_arr[0].SetTags(t)
+
+	// Posting
 	p, err := s.getPostings(ctx, id)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, id, err)
@@ -111,6 +136,25 @@ func (s *Service) UpdateTransaction(ctx context.Context, newTransaction *domain.
 		s.repo.Rollback()
 		return fmt.Errorf(errorMsg, err)
 	}
+
+	if err := s.updateTransactionTags(ctx, newTransaction.ID(), newTransaction.Tags()); err != nil {
+		s.repo.Rollback()
+		return fmt.Errorf(errorMsg, err)
+	}
+
+	err = s.repo.PostingQueryBuilder().
+		SetCondition(db.NewWhere(db.Column_TransactionId, db.Equal, strconv.FormatInt(newTransaction.ID(), 10))).
+		Delete(ctx)
+	if err != nil {
+		s.repo.Rollback()
+		return fmt.Errorf(errorMsg, err)
+	}
+
+	if err := s.addPostings(ctx, newTransaction.Postings(), newTransaction.ID()); err != nil {
+		s.repo.Rollback()
+		return fmt.Errorf(errorMsg, err)
+	}
+
 	if err := s.repo.Commit(); err != nil {
 		s.repo.Rollback()
 		return fmt.Errorf(errorMsg, err)
@@ -118,23 +162,23 @@ func (s *Service) UpdateTransaction(ctx context.Context, newTransaction *domain.
 	return nil
 }
 
-func (s *Service) DeleteTransaction(ctx context.Context, transactionID int64) error {
+func (s *Service) DeleteTransaction(ctx context.Context, transactionId int64) error {
 	const errorMsg = "DeleteTransaction on ID %d failed: %w"
 	if err := s.repo.BeginTx(ctx); err != nil {
-		return fmt.Errorf(errorMsg, transactionID, err)
+		return fmt.Errorf(errorMsg, transactionId, err)
 	}
 	err := s.repo.TransactionQueryBuilder().
 		SetCondition(
-			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(transactionID, 10)),
+			db.NewWhere(db.Column_Id, db.Equal, strconv.FormatInt(transactionId, 10)),
 		).
 		Delete(ctx)
 	if err != nil {
 		s.repo.Rollback()
-		return fmt.Errorf(errorMsg, transactionID, err)
+		return fmt.Errorf(errorMsg, transactionId, err)
 	}
 	if err := s.repo.Commit(); err != nil {
 		s.repo.Rollback()
-		return fmt.Errorf(errorMsg, transactionID, err)
+		return fmt.Errorf(errorMsg, transactionId, err)
 	}
 	return nil
 }
@@ -149,4 +193,23 @@ func (s *Service) getPostings(ctx context.Context, transactionID int64) ([]*doma
 		return nil, fmt.Errorf("Failed to get posting %d: %w", transactionID, err)
 	}
 	return p, nil
+}
+
+func (s *Service) addPostings(ctx context.Context, postingList []*domain.Posting, transactionId int64) error {
+	for _, p := range postingList {
+		_, err := s.repo.PostingQueryBuilder().
+			AddColumns([]db.Column{
+				db.Column_TransactionId,
+				db.Column_AccountId,
+				db.Column_Amount,
+				db.Column_Currency,
+				db.Column_DateCreated,
+				db.Column_DateUpdated,
+			}).
+			Insert(ctx, transactionId, p.AccountID(), p.Amount(), p.Currency(), time.Now(), time.Now())
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }

@@ -2,7 +2,7 @@ import { Select as ArkSelect, SelectValueChangeDetails, createListCollection } f
 import { ChevronsUpDownIcon, XIcon } from 'lucide-solid'
 import { createSignal } from 'solid-js'
 import { Index, Portal } from 'solid-js/web'
-import '../../styles/select.css';
+import 'src/styles/select.css';
 
 interface Item {
     label: string

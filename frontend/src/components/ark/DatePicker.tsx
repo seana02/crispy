@@ -2,7 +2,7 @@ import { DatePicker as ArkDatePicker, DateInputValueChangeDetails } from '@ark-u
 import { Index } from 'solid-js'
 import { Portal } from 'solid-js/web'
 import { parseDate } from '@ark-ui/solid';
-import '../../styles/datepicker.css';
+import 'src/styles/datepicker.css';
 
 interface DatePickerProps {
     onChange: (d: DateInputValueChangeDetails) => void

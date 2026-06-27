@@ -13,7 +13,7 @@ import (
 // =============================================================== //
 
 func (a *App) CreateTransaction(t *domain.TransactionDTO) error {
-	if err := a.SubmitTransaction(a.deps.Service.CreateTransaction, t); err != nil {
+	if err := a.submitTransaction(a.deps.Service.CreateTransaction, t); err != nil {
 		a.deps.Logger.Error("Error creating transaction", "Error", err)
 		return err
 	}
@@ -21,14 +21,14 @@ func (a *App) CreateTransaction(t *domain.TransactionDTO) error {
 }
 
 func (a *App) UpdateTransaction(t *domain.TransactionDTO) error {
-	if err := a.SubmitTransaction(a.deps.Service.UpdateTransaction, t); err != nil {
+	if err := a.submitTransaction(a.deps.Service.UpdateTransaction, t); err != nil {
 		a.deps.Logger.Error("Error updating transaction", "Error", err)
 		return err
 	}
 	return nil
 }
 
-func (a *App) SubmitTransaction(fn func(ctx context.Context, t *domain.Transaction) error, t *domain.TransactionDTO) error {
+func (a *App) submitTransaction(fn func(ctx context.Context, t *domain.Transaction) error, t *domain.TransactionDTO) error {
 	domainObj, err := t.ToDomain()
 	if err != nil {
 		return err
@@ -167,6 +167,37 @@ func (a *App) GetAccountByID(id int64) (*domain.AccountDTO, error) {
 func (a *App) DeleteAccount(id int64) error {
 	if err := a.deps.Service.DeleteAccount(a.ctx, id); err != nil {
 		a.deps.Logger.Error("Error deleting account", "id", id, "Error", err)
+	}
+	return nil
+}
+
+// =============================================================== //
+// *                                                             * //
+// *                           Tags                              * //
+// *                                                             * //
+// =============================================================== //
+
+func (a *App) UpdateTag(id int64, newName string) error {
+	if err := a.deps.Service.UpdateTag(a.ctx, id, newName); err != nil {
+		a.deps.Logger.Error("Error updating account", "Error", err)
+		return err
+	}
+	return nil
+}
+
+func (a *App) GetTagList() ([]domain.Tag, error) {
+	tags, err := a.deps.Service.GetAllTags(a.ctx, -1, -1)
+	a.deps.Logger.Debug("GetTagList", "tags", tags)
+	if err != nil {
+		a.deps.Logger.Error("Error getting tag list", "Error", err)
+		return nil, err
+	}
+	return tags, nil
+}
+
+func (a *App) DeleteTag(id int64) error {
+	if err := a.deps.Service.DeleteTag(a.ctx, id); err != nil {
+		a.deps.Logger.Error("Error deleting tag", "id", id, "Error", err)
 	}
 	return nil
 }

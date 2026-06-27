@@ -61,6 +61,8 @@ const (
 	Table_Transaction Table = iota
 	Table_Account
 	Table_Posting
+	Table_Tag
+	Table_TransactionTags
 )
 
 func (t Table) String() string {
@@ -71,6 +73,10 @@ func (t Table) String() string {
 		return "\"Account\""
 	case Table_Posting:
 		return "\"Posting\""
+	case Table_Tag:
+		return "\"Tag\""
+	case Table_TransactionTags:
+		return "\"Transaction_Tags\""
 	}
 	return ""
 }
@@ -128,7 +134,7 @@ func (c OrCondition) ToSQL() (string, []any) {
 }
 
 type Join struct {
-	TableName string
+	TableName Table
 	Condition string
 }
 
@@ -142,6 +148,7 @@ type SQLite_Builder struct {
 	OrCondition []OrCondition
 	OrderBy     []Column
 	Reverse     bool
+	OrIgnore    bool
 }
 
 type SQLiteDB struct {
@@ -267,7 +274,7 @@ func (s *SQLite_Builder) SetCondition(c Condition) {
 	s.Where = c
 }
 
-func (s *SQLite_Builder) AddJoin(tableName, condition string) {
+func (s *SQLite_Builder) AddJoin(tableName Table, condition string) {
 	s.Join = &Join{
 		TableName: tableName,
 		Condition: condition,
@@ -299,7 +306,11 @@ func (s *SQLite_Builder) Insert(ctx context.Context, args ...any) (int64, error)
 		skip = false
 	}
 	var stmt strings.Builder
-	stmt.Write([]byte("INSERT INTO "))
+	stmt.Write([]byte("INSERT "))
+	if s.OrIgnore {
+		stmt.Write([]byte("OR IGNORE "))
+	}
+	stmt.Write([]byte("INTO "))
 	stmt.Write([]byte(s.table.String()))
 	stmt.Write([]byte(" ("))
 	stmt.Write([]byte(columnList.String()))
@@ -329,7 +340,13 @@ func (s *SQLite_Builder) Select(ctx context.Context, page, perPage int, callback
 	writePagination(&stmt, page, perPage)
 
 	s.Handle.Logger.Debug("Selecting", "Query", stmt.String(), "Args", args)
-	rows, err := s.Handle.db.QueryContext(ctx, stmt.String(), args...)
+	var rows *sql.Rows
+	var err error
+	if s.Handle.tx != nil {
+		rows, err = s.Handle.tx.QueryContext(ctx, stmt.String(), args...)
+	} else {
+		rows, err = s.Handle.db.QueryContext(ctx, stmt.String(), args...)
+	}
 	if err != nil {
 		return fmt.Errorf("Select failed: %w", err)
 	}
@@ -394,7 +411,7 @@ func (s *SQLite_Builder) Delete(ctx context.Context) error {
 func writeJoin(stmt *strings.Builder, join *Join) {
 	if join != nil {
 		stmt.Write([]byte(" JOIN "))
-		stmt.Write([]byte(join.TableName))
+		stmt.Write([]byte(join.TableName.String()))
 		stmt.Write([]byte(" on "))
 		stmt.Write([]byte(join.Condition))
 	}
