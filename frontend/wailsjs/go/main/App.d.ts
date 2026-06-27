@@ -6,6 +6,8 @@ export function CreateAccount(arg1:domain.AccountDTO):Promise<void>;
 
 export function CreateAccountSample(arg1:domain.AccountDTO):Promise<number>;
 
+export function CreateTag(arg1:string):Promise<void>;
+
 export function CreateTransaction(arg1:domain.TransactionDTO):Promise<void>;
 
 export function CreateTransactionSample(arg1:domain.TransactionDTO):Promise<number>;
@@ -24,9 +26,11 @@ export function GetAccountList():Promise<Array<domain.AccountDTO>>;
 
 export function GetTagList():Promise<Array<domain.Tag>>;
 
-export function GetTransactionByID(arg1:number):Promise<domain.TransactionDTO>;
+export function GetTransactionByID(arg1:number,arg2:boolean):Promise<domain.TransactionDTO>;
 
 export function GetTransactionList():Promise<Array<domain.TransactionDTO>>;
+
+export function GetTransactionPostings(arg1:number):Promise<Array<domain.PostingDTO>>;
 
 export function Greet(arg1:string):Promise<string>;
 

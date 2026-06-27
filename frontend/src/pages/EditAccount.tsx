@@ -1,5 +1,5 @@
 import { useParams } from "@solidjs/router";
-import { createMemo, createResource, ErrorBoundary, Suspense } from "solid-js";
+import { createMemo, createResource, ErrorBoundary, Show } from "solid-js";
 import AccountForm from "src/components/AccountForm";
 import { getAccountById, submitEditAccount } from "src/stores/accountStore";
 import { domain } from "wailsjs/go/models";
@@ -28,7 +28,7 @@ export default function EditAccount() {
 
     return (
         <ErrorBoundary fallback={err => <p>Loading error: {err.message}</p>}>
-            <Suspense fallback={<p>Loading</p>}>
+            <Show when={acct()} fallback={<p>Loading</p>}>
                 <AccountForm
                     id={id}
                     name={data()!.name}
@@ -42,7 +42,7 @@ export default function EditAccount() {
                         return submitEditAccount(id, data()!.parentID, name, description, type, currency, active);
                     }}
                 />
-            </Suspense>
+            </Show>
         </ErrorBoundary>
     );
 }

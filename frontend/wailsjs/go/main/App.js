@@ -10,6 +10,10 @@ export function CreateAccountSample(arg1) {
   return window['go']['main']['App']['CreateAccountSample'](arg1);
 }
 
+export function CreateTag(arg1) {
+  return window['go']['main']['App']['CreateTag'](arg1);
+}
+
 export function CreateTransaction(arg1) {
   return window['go']['main']['App']['CreateTransaction'](arg1);
 }
@@ -46,12 +50,16 @@ export function GetTagList() {
   return window['go']['main']['App']['GetTagList']();
 }
 
-export function GetTransactionByID(arg1) {
-  return window['go']['main']['App']['GetTransactionByID'](arg1);
+export function GetTransactionByID(arg1, arg2) {
+  return window['go']['main']['App']['GetTransactionByID'](arg1, arg2);
 }
 
 export function GetTransactionList() {
   return window['go']['main']['App']['GetTransactionList']();
+}
+
+export function GetTransactionPostings(arg1) {
+  return window['go']['main']['App']['GetTransactionPostings'](arg1);
 }
 
 export function Greet(arg1) {

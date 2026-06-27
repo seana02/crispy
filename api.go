@@ -48,35 +48,54 @@ func (a *App) GetTransactionList() ([]*domain.TransactionDTO, error) {
 	}
 	output := []*domain.TransactionDTO{}
 	for _, t := range t_list {
-		newT, err := a.prepareTransaction(t)
-		if err != nil {
-			return nil, err
-		}
-		output = append(output, newT)
+		dto := t.ToDTO()
+		dto.Postings = nil
+		dto.Tags = nil
+		output = append(output, dto)
 	}
 	return output, nil
 }
 
-func (a *App) GetTransactionByID(id int64) (*domain.TransactionDTO, error) {
-	tx, err := a.deps.Service.GetTransactionByID(a.ctx, id)
+func (a *App) GetTransactionByID(id int64, includeFullData bool) (*domain.TransactionDTO, error) {
+	tx, err := a.deps.Service.GetTransactionByID(a.ctx, id, includeFullData)
 	if err != nil {
 		a.deps.Logger.Error("Error getting transaction", "id", id, "Error", err)
 		return nil, err
 	}
-	return a.prepareTransaction(tx)
+	dto := tx.ToDTO()
+	if includeFullData {
+		postings, err := a.preparePostings(dto.Postings)
+		if err != nil {
+			return nil, err
+		}
+		dto.Postings = postings
+	}
+	return dto, nil
 }
 
-func (a *App) prepareTransaction(tx *domain.Transaction) (*domain.TransactionDTO, error) {
-	t := tx.ToDTO()
-	for _, p := range t.Postings {
+func (a *App) GetTransactionPostings(id int64) ([]*domain.PostingDTO, error) {
+	postings, err := a.deps.Service.GetTransactionPostings(a.ctx, id)
+	if err != nil {
+		a.deps.Logger.Error("Error getting transaction postings", "id", id, "Error", err)
+		return nil, err
+	}
+	var dtos []*domain.PostingDTO
+	for _, p := range postings {
+		dtos = append(dtos, p.ToDTO())
+	}
+	return a.preparePostings(dtos)
+}
+
+func (a *App) preparePostings(postings []*domain.PostingDTO) ([]*domain.PostingDTO, error) {
+	for _, p := range postings {
 		name, err := a.deps.Service.GetAccountName(a.ctx, p.AccountID)
 		if err != nil {
-			a.deps.Logger.Error("Error preparing transaction", "Error", err)
+			a.deps.Logger.Error("Error preparing postings", "Error", err)
 			return nil, err
 		}
 		p.AccountName = name
 	}
-	return t, nil
+	return postings, nil
 }
 
 func (a *App) DeleteTransaction(id int64) error {
@@ -176,6 +195,14 @@ func (a *App) DeleteAccount(id int64) error {
 // *                           Tags                              * //
 // *                                                             * //
 // =============================================================== //
+
+func (a *App) CreateTag(name string) error {
+	if err := a.deps.Service.UpsertTags(a.ctx, []string{name}); err != nil {
+		a.deps.Logger.Error("Error creating new tag", "Error", err)
+		return err
+	}
+	return nil
+}
 
 func (a *App) UpdateTag(id int64, newName string) error {
 	if err := a.deps.Service.UpdateTag(a.ctx, id, newName); err != nil {
