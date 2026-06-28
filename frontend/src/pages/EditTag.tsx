@@ -1,6 +1,5 @@
 import { useParams } from "@solidjs/router";
 import { createMemo, createResource, createSignal, ErrorBoundary, Show, onMount } from "solid-js";
-import { useNavigate } from "@solidjs/router";
 import TagForm from "src/components/TagForm";
 import TransactionList from "src/components/TransactionList";
 import ConfirmationPopup from "src/components/ConfirmationPopup";
@@ -8,6 +7,7 @@ import { getTagById, submitEditTag } from "src/stores/tagStore";
 import { fetchTransactionsByTag, removeTagFromTransaction } from "src/stores/transactionStore";
 import { domain } from "wailsjs/go/models";
 import { Unlink } from "lucide-solid";
+import 'src/styles/form.css';
 
 
 export default function EditTag() {
@@ -46,6 +46,7 @@ export default function EditTag() {
                     submit={(name) => submitEditTag(id, name)}
                 />
                 <div style={{ "border-bottom": "2px solid var(--color-text-secondary)", margin: "8px 0" }} />
+                <h2 class="form-transaction-list">Transactions</h2>
                 <TransactionList
                     transactions={tagTransactions()}
                     customButton={{
@@ -55,6 +56,7 @@ export default function EditTag() {
                     }}
                 />
                 <Show when={tagTransactions().length > 0} fallback={<></>}>
+
                     {tagTransactions().map((tx) => (
                         <ConfirmationPopup
                             isOpen={removeTagConfirmation() === tx.id}

@@ -79,7 +79,7 @@ func (p *PostingDTO) ToDomain() (*Posting, error) {
 	if err != nil {
 		return nil, err
 	}
-	updated, err := time.Parse(time.RFC3339, p.DateCreated)
+	updated, err := time.Parse(time.RFC3339, p.DateUpdated)
 	if err != nil {
 		return nil, err
 	}
@@ -101,8 +101,8 @@ func (p *Posting) ToDTO() *PostingDTO {
 		AccountID:     p.AccountID(),
 		Amount:        p.Amount(),
 		Currency:      p.Currency(),
-		DateCreated:   p.DateCreated().Format(time.RFC3339),
-		DateUpdated:   p.DateUpdated().Format(time.RFC3339),
+		DateCreated:   p.DateCreated().Format("2006-01-02 15:04:05"),
+		DateUpdated:   p.DateCreated().Format("2006-01-02 15:04:05"),
 	}
 }
 

@@ -44,7 +44,7 @@ func (a *AccountDTO) ToDomain() (*Account, error) {
 	if err != nil {
 		return nil, err
 	}
-	updated, err := time.Parse(time.RFC3339, a.DateCreated)
+	updated, err := time.Parse(time.RFC3339, a.DateUpdated)
 	if err != nil {
 		return nil, err
 	}
@@ -71,8 +71,8 @@ func (a *Account) ToDTO() *AccountDTO {
 		Currency:    a.currency,
 		Description: a.description,
 		Active:      a.active,
-		DateCreated: a.dateCreated.Format(time.RFC3339),
-		DateUpdated: a.dateUpdated.Format(time.RFC3339),
+		DateCreated: a.dateCreated.Format("2006-01-02 15:04:05"),
+		DateUpdated: a.dateUpdated.Format("2006-01-02 15:04:05"),
 	}
 }
 

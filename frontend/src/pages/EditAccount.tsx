@@ -55,6 +55,7 @@ export default function EditAccount() {
                     }}
                 />
                 <div style={{ "border-bottom": "2px solid var(--color-text-secondary)", margin: "8px 0" }} />
+                <h2 class="form-transaction-list">Transactions</h2>
                 <TransactionList
                     transactions={acctTransactions()}
                 />

@@ -144,7 +144,7 @@ func (s *Service) updateTransactionTags(ctx context.Context, transactionId int64
 	}
 
 	for _, tag := range toAdd {
-		fmt.Println("adding: %s", tag)
+		fmt.Printf("adding: %s\n", tag)
 		id, err := s.GetTagIDByName(ctx, tag)
 		if err != nil {
 			return err

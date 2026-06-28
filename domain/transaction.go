@@ -45,9 +45,7 @@ func (t *TransactionDTO) ToDomain() (*Transaction, error) {
 	if err != nil {
 		return nil, err
 	}
-	localTime := converted.Local()
-	y, m, d := localTime.Date()
-	date := time.Date(y, m, d, 0, 0, 0, 0, localTime.Location())
+	date := time.Date(converted.Year(), converted.Month(), converted.Day(), 0, 0, 0, 0, converted.Local().Location())
 	created, err := time.Parse(time.RFC3339, t.DateCreated)
 	if err != nil {
 		return nil, err

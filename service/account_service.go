@@ -4,6 +4,7 @@ import (
 	"context"
 	"crispy/db"
 	"crispy/domain"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -111,7 +112,7 @@ func (s *Service) GetAccountID(ctx context.Context, accountName string) (int64, 
 func (s *Service) GetAccountName(ctx context.Context, id int64) (string, error) {
 	const errorMsg = "GetAccountName for ID %d failed: %w"
 	if id <= 0 {
-		return "", fmt.Errorf(errorMsg, id, "invalid ID")
+		return "", fmt.Errorf(errorMsg, id, errors.New("invalid ID"))
 	}
 	acct, err := s.GetAccountByID(ctx, id)
 	if err != nil {
@@ -176,7 +177,7 @@ func (s *Service) UpdateAccount(ctx context.Context, newAccount *domain.Account)
 func (s *Service) DeleteAccount(ctx context.Context, accountID int64) error {
 	const errorMsg = "DeleteAccount for ID %d failed: %w"
 	if accountID <= 0 {
-		return fmt.Errorf(errorMsg, accountID, "Invalid ID")
+		return fmt.Errorf(errorMsg, accountID, errors.New("invalid ID"))
 	}
 	if err := s.repo.BeginTx(ctx); err != nil {
 		return fmt.Errorf(errorMsg, accountID, err)

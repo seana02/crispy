@@ -123,3 +123,8 @@ select:focus {
 input[disabled] {
   background-color: var(--color-surface);
 }
+
+.form-transaction-list {
+  width: min-content;
+  margin: auto
+}

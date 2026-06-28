@@ -6,7 +6,6 @@ import (
 	"crispy/domain"
 	"fmt"
 	"strconv"
-	"time"
 )
 
 func (s *Service) CreateTransaction(ctx context.Context, newTransaction *domain.Transaction) error {
@@ -224,7 +223,7 @@ func (s *Service) addPostings(ctx context.Context, postingList []*domain.Posting
 				db.Column_DateCreated,
 				db.Column_DateUpdated,
 			}).
-			Insert(ctx, transactionId, p.AccountID(), p.Amount(), p.Currency(), time.Now(), time.Now())
+			Insert(ctx, transactionId, p.AccountID(), p.Amount(), p.Currency(), now(), now())
 		if err != nil {
 			return err
 		}
