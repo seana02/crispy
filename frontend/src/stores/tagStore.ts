@@ -48,4 +48,5 @@ export {
     submitEditTag,
     deleteTagById,
     getTagById,
+    refetch as tagRefetch,
 };

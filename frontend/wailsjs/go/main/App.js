@@ -62,8 +62,20 @@ export function GetTransactionPostings(arg1) {
   return window['go']['main']['App']['GetTransactionPostings'](arg1);
 }
 
+export function GetTransactionsByAccount(arg1) {
+  return window['go']['main']['App']['GetTransactionsByAccount'](arg1);
+}
+
+export function GetTransactionsByTag(arg1) {
+  return window['go']['main']['App']['GetTransactionsByTag'](arg1);
+}
+
 export function Greet(arg1) {
   return window['go']['main']['App']['Greet'](arg1);
+}
+
+export function RemoveTagFromTransaction(arg1, arg2) {
+  return window['go']['main']['App']['RemoveTagFromTransaction'](arg1, arg2);
 }
 
 export function SearchAccount(arg1) {

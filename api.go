@@ -86,6 +86,38 @@ func (a *App) GetTransactionPostings(id int64) ([]*domain.PostingDTO, error) {
 	return a.preparePostings(dtos)
 }
 
+func (a *App) GetTransactionsByTag(tagId int64) ([]*domain.TransactionDTO, error) {
+	txList, err := a.deps.Service.GetTransactionsByTag(a.ctx, tagId)
+	if err != nil {
+		a.deps.Logger.Error("Error getting transactions by tag", "tagId", tagId, "Error", err)
+		return nil, err
+	}
+	var output []*domain.TransactionDTO
+	for _, t := range txList {
+		dto := t.ToDTO()
+		dto.Postings = nil
+		dto.Tags = nil
+		output = append(output, dto)
+	}
+	return output, nil
+}
+
+func (a *App) GetTransactionsByAccount(acctId int64) ([]*domain.TransactionDTO, error) {
+	txList, err := a.deps.Service.GetTransactionsByAccount(a.ctx, acctId)
+	if err != nil {
+		a.deps.Logger.Error("Error getting transactions by tag", "acctId", acctId, "Error", err)
+		return nil, err
+	}
+	var output []*domain.TransactionDTO
+	for _, t := range txList {
+		dto := t.ToDTO()
+		dto.Postings = nil
+		dto.Tags = nil
+		output = append(output, dto)
+	}
+	return output, nil
+}
+
 func (a *App) preparePostings(postings []*domain.PostingDTO) ([]*domain.PostingDTO, error) {
 	for _, p := range postings {
 		name, err := a.deps.Service.GetAccountName(a.ctx, p.AccountID)
@@ -225,6 +257,14 @@ func (a *App) GetTagList() ([]domain.Tag, error) {
 func (a *App) DeleteTag(id int64) error {
 	if err := a.deps.Service.DeleteTag(a.ctx, id); err != nil {
 		a.deps.Logger.Error("Error deleting tag", "id", id, "Error", err)
+	}
+	return nil
+}
+
+func (a *App) RemoveTagFromTransaction(transactionId int64, tagId int64) error {
+	if err := a.deps.Service.RemoveTagFromTransaction(a.ctx, transactionId, tagId); err != nil {
+		a.deps.Logger.Error("Error removing tag from transaction", "transactionId", transactionId, "tagId", tagId, "Error", err)
+		return err
 	}
 	return nil
 }

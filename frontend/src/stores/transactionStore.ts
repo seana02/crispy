@@ -1,7 +1,9 @@
 import { createStore, reconcile } from "solid-js/store";
-import { CreateTransaction, UpdateTransaction, GetTransactionList, DeleteTransaction, GetTransactionByID } from "../../wailsjs/go/main/App";
+import { CreateTransaction, UpdateTransaction, GetTransactionList, DeleteTransaction, GetTransactionByID, GetTransactionsByTag, RemoveTagFromTransaction, GetTransactionsByAccount } from "../../wailsjs/go/main/App";
 import { domain } from "wailsjs/go/models";
 import { createEffect, createResource } from "solid-js";
+import { accountRefetch } from "src/stores/accountStore";
+import { tagRefetch } from "src/stores/tagStore";
 
 const [txList, setTxList] = createStore<domain.TransactionDTO[]>([]);
 
@@ -72,6 +74,8 @@ const submitEditTransaction = async (
             dateUpdated: new Date()
         });
         await UpdateTransaction(newDTO);
+        accountRefetch();
+        tagRefetch();
         await refetch();
     } catch (err) {
         console.log(err);
@@ -91,11 +95,41 @@ const deleteTransactionById = async (id: number) => {
     }
 }
 
+const fetchTransactionsByTag = async (tagId: number): Promise<domain.TransactionDTO[]> => {
+    try {
+        return await GetTransactionsByTag(tagId);
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+}
+
+const fetchTransactionsByAccount = async (acctId: number): Promise<domain.TransactionDTO[]> => {
+    try {
+        return await GetTransactionsByAccount(acctId);
+    } catch (err) {
+        console.log(err);
+        return [];
+    }
+}
+
+const removeTagFromTransaction = async (transactionId: number, tagId: number) => {
+    try {
+        await RemoveTagFromTransaction(transactionId, tagId);
+    } catch (err) {
+        console.log(err);
+    }
+}
+
 export {
     txList,
     submitNewTransaction,
     submitEditTransaction,
     getTransactionById,
     deleteTransactionById,
+    fetchTransactionsByTag,
+    fetchTransactionsByAccount,
+    removeTagFromTransaction,
+    refetch as transactionRefetch,
 };
 

@@ -439,7 +439,7 @@ func writeOrderBy(stmt *strings.Builder, orderby []Column, reverse bool) {
 		stmt.Write([]byte(c.String()))
 	}
 	if reverse {
-		stmt.Write([]byte("DESC"))
+		stmt.Write([]byte(" DESC"))
 	}
 }
 

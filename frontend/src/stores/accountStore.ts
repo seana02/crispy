@@ -5,7 +5,7 @@ import { createEffect, createResource } from "solid-js";
 
 const [acctList, setAcctList] = createStore<domain.AccountDTO[]>([]);
 
-const [dataResource, { refetch, }] = createResource(async () => {
+const [dataResource, { refetch }] = createResource(async () => {
     return await GetAccountList();
 })
 
@@ -89,5 +89,6 @@ export {
     getAccountIdByName,
     deleteAccountById,
     searchAccount,
+    refetch as accountRefetch,
 };
 

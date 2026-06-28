@@ -184,6 +184,33 @@ func diffIDs(existing, desired []string) (toAdd, toRemove []string) {
 	return
 }
 
+func (s *Service) RemoveTagFromTransaction(ctx context.Context, transactionId int64, tagId int64) error {
+	const errorMsg = "RemoveTagFromTransaction on transactionID %d and tagID %d failed: %w"
+	if err := s.repo.BeginTx(ctx); err != nil {
+		return fmt.Errorf(errorMsg, transactionId, tagId, err)
+	}
+
+	err := s.repo.TransactionTagsQueryBuilder().
+		SetCondition(db.AndCondition{
+			Conditions: []db.Condition{
+				db.NewWhere(db.Column_TransactionId, db.Equal, strconv.FormatInt(transactionId, 10)),
+				db.NewWhere(db.Column_TagId, db.Equal, strconv.FormatInt(tagId, 10)),
+			},
+		}).
+		Delete(ctx)
+	if err != nil {
+		s.repo.Rollback()
+		return fmt.Errorf(errorMsg, transactionId, tagId, err)
+	}
+
+	if err := s.repo.Commit(); err != nil {
+		s.repo.Rollback()
+		return fmt.Errorf(errorMsg, transactionId, tagId, err)
+	}
+
+	return nil
+}
+
 func (s *Service) getTags(ctx context.Context, transactionId int64) ([]string, error) {
 	tag_arr, err := s.repo.TagQueryBuilder().
 		SetCondition(

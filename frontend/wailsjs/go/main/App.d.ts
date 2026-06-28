@@ -32,7 +32,13 @@ export function GetTransactionList():Promise<Array<domain.TransactionDTO>>;
 
 export function GetTransactionPostings(arg1:number):Promise<Array<domain.PostingDTO>>;
 
+export function GetTransactionsByAccount(arg1:number):Promise<Array<domain.TransactionDTO>>;
+
+export function GetTransactionsByTag(arg1:number):Promise<Array<domain.TransactionDTO>>;
+
 export function Greet(arg1:string):Promise<string>;
+
+export function RemoveTagFromTransaction(arg1:number,arg2:number):Promise<void>;
 
 export function SearchAccount(arg1:string):Promise<Array<domain.AccountDTO>>;
 

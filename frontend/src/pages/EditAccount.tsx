@@ -1,7 +1,9 @@
 import { useParams } from "@solidjs/router";
-import { createMemo, createResource, ErrorBoundary, Show } from "solid-js";
+import { createMemo, createResource, createSignal, ErrorBoundary, onMount, Show } from "solid-js";
 import AccountForm from "src/components/AccountForm";
+import TransactionList from "src/components/TransactionList";
 import { getAccountById, submitEditAccount } from "src/stores/accountStore";
+import { fetchTransactionsByAccount } from "src/stores/transactionStore";
 import { domain } from "wailsjs/go/models";
 
 export default function EditAccount() {
@@ -10,7 +12,8 @@ export default function EditAccount() {
     const id = +params.id!;
 
     const [acct] = createResource(() => id, () => getAccountById(id));
-    
+    const [acctTransactions, setAcctTransactions] = createSignal<domain.TransactionDTO[]>([]);
+
     const data = createMemo(() => {
         const item = acct();
         if (!item) return null;
@@ -24,6 +27,15 @@ export default function EditAccount() {
             dateCreated: item.dateCreated,
             dateUpdated: item.dateUpdated,
         };
+    });
+
+    const loadTransactions = async () => {
+        const txs = await fetchTransactionsByAccount(id);
+        setAcctTransactions(txs || []);
+    }
+
+    onMount(() => {
+        loadTransactions();
     });
 
     return (
@@ -41,6 +53,10 @@ export default function EditAccount() {
                     submit={(name: string, description: string, type: domain.Type, currency: string, active: boolean) => {
                         return submitEditAccount(id, data()!.parentID, name, description, type, currency, active);
                     }}
+                />
+                <div style={{ "border-bottom": "2px solid var(--color-text-secondary)", margin: "8px 0" }} />
+                <TransactionList
+                    transactions={acctTransactions()}
                 />
             </Show>
         </ErrorBoundary>

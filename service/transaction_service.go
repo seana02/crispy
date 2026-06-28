@@ -60,6 +60,7 @@ func (s *Service) GetAllTransactions(ctx context.Context, page, perPage int) ([]
 	const errorMsg = "GetAllTransactions failed: %w"
 
 	tx_arr, err := s.repo.TransactionQueryBuilder().
+		AddOrderBy([]db.Column{db.Column_Date}, true).
 		Select(ctx, page, perPage)
 	if err != nil {
 		return nil, fmt.Errorf(errorMsg, err)
@@ -100,6 +101,34 @@ func (s *Service) GetTransactionByID(ctx context.Context, id int64, includeFullD
 
 func (s *Service) GetTransactionPostings(ctx context.Context, id int64) ([]*domain.Posting, error) {
 	return s.getPostings(ctx, id)
+}
+
+func (s *Service) GetTransactionsByTag(ctx context.Context, tagId int64) ([]*domain.Transaction, error) {
+	const errorMsg = "GetTransactionsByTag for tagId %d failed: %w"
+
+	txList, err := s.repo.TransactionQueryBuilder().
+		SetCondition(db.NewWhere(db.Column_TagId, db.Equal, strconv.FormatInt(tagId, 10))).
+		AddJoin(db.Table_TransactionTags, "transaction_id = id").
+		Select(ctx, -1, -1)
+	if err != nil {
+		return nil, fmt.Errorf(errorMsg, tagId, err)
+	}
+
+	return txList, nil
+}
+
+func (s *Service) GetTransactionsByAccount(ctx context.Context, acctId int64) ([]*domain.Transaction, error) {
+	const errorMsg = "GetTransactionsByAccount for acctId %d failed: %w"
+
+	txList, err := s.repo.TransactionQueryBuilder().
+		SetCondition(db.NewWhere(db.Column_AccountId, db.Equal, strconv.FormatInt(acctId, 10))).
+		AddJoin(db.Table_Posting, "transaction_id = \"Transaction\".id").
+		AddOrderBy([]db.Column{db.Column_Date}, true).
+		Select(ctx, -1, -1)
+	if err != nil {
+		return nil, fmt.Errorf(errorMsg, acctId, err)
+	}
+	return txList, nil
 }
 
 func (s *Service) UpdateTransaction(ctx context.Context, newTransaction *domain.Transaction) error {
