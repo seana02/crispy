@@ -1,6 +1,6 @@
 import { Select as ArkSelect, SelectValueChangeDetails, createListCollection } from '@ark-ui/solid'
-import { ChevronsUpDownIcon, XIcon } from 'lucide-solid'
-import { createSignal } from 'solid-js'
+import { ChevronsUpDownIcon } from 'lucide-solid'
+import { createMemo } from 'solid-js'
 import { Index, Portal } from 'solid-js/web'
 import 'src/styles/select.css';
 
@@ -18,10 +18,12 @@ interface SelectProps {
 }
 
 export default function Select(props: SelectProps) {
-    const collection = createListCollection<Item>({ items: props.list.map(item => ({ label: item, value: item })) });
+    const collection = createMemo(() =>
+        createListCollection<Item>({ items: props.list.map(item => ({ label: item, value: item })) })
+    );
 
     return (
-        <ArkSelect.Root collection={collection} value={props.value ? [props.value] : []} onValueChange={props.onChange}>
+        <ArkSelect.Root collection={collection()} value={props.value ? [props.value] : []} onValueChange={props.onChange}>
             <ArkSelect.Label>{props.label}</ArkSelect.Label>
             <ArkSelect.Control>
                 <ArkSelect.Trigger>
@@ -34,7 +36,7 @@ export default function Select(props: SelectProps) {
             <Portal>
                 <ArkSelect.Positioner>
                     <ArkSelect.Content>
-                        <Index each={collection.items}>
+                        <Index each={collection().items}>
                             {(item) => (
                                 <ArkSelect.Item item={item()}>
                                     <ArkSelect.ItemText>{item().label}</ArkSelect.ItemText>

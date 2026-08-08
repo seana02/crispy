@@ -14,6 +14,7 @@ interface ComboboxProps {
     fetchOptions: (input: string) => Promise<string[]>
     value: string
     onChange: (value: string) => void
+    label: string
     placeholder?: string
     debounceMs?: number
 }
@@ -67,7 +68,7 @@ export default function Combobox(props: ComboboxProps) {
                 commit(picked)
             }}
         >
-            <ArkCombobox.Label>Account</ArkCombobox.Label>
+            <ArkCombobox.Label>{props.label}</ArkCombobox.Label>
             <ArkCombobox.Control>
                 <ArkCombobox.Input
                     placeholder={props.placeholder ?? "Type to search…"}

@@ -148,6 +148,7 @@ export default function TransactionForm(props: TransactionProps) {
                                 let accts = await searchAccount(input);
                                 return accts.map(a => a.name);
                             }}
+                            label="Account"
                             value={p.account}
                             onChange={(e) => {
                                 console.log("Updated posting", i(), "to value", e);

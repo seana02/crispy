@@ -7,6 +7,7 @@ import 'src/styles/datepicker.css';
 interface DatePickerProps {
     onChange: (d: DateInputValueChangeDetails) => void
     value: Date
+    label?: string
 }
 
 export default function DatePicker(props: DatePickerProps) {
@@ -15,7 +16,7 @@ export default function DatePicker(props: DatePickerProps) {
             <ArkDatePicker.Context>
                 {(api) => (
                     <>
-                        <ArkDatePicker.Label>Date</ArkDatePicker.Label>
+                        <ArkDatePicker.Label>{props.label || "Date"}</ArkDatePicker.Label>
                         <ArkDatePicker.Control>
                             <ArkDatePicker.Input onFocus={() => api().setOpen(true)} />
                         </ArkDatePicker.Control>

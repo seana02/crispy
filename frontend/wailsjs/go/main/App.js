@@ -10,6 +10,10 @@ export function CreateAccountSample(arg1) {
   return window['go']['main']['App']['CreateAccountSample'](arg1);
 }
 
+export function CreateBudget(arg1) {
+  return window['go']['main']['App']['CreateBudget'](arg1);
+}
+
 export function CreateTag(arg1) {
   return window['go']['main']['App']['CreateTag'](arg1);
 }
@@ -24,6 +28,10 @@ export function CreateTransactionSample(arg1) {
 
 export function DeleteAccount(arg1) {
   return window['go']['main']['App']['DeleteAccount'](arg1);
+}
+
+export function DeleteBudget(arg1) {
+  return window['go']['main']['App']['DeleteBudget'](arg1);
 }
 
 export function DeleteTag(arg1) {
@@ -44,6 +52,10 @@ export function GetAccountIDByName(arg1) {
 
 export function GetAccountList() {
   return window['go']['main']['App']['GetAccountList']();
+}
+
+export function GetBudgetList() {
+  return window['go']['main']['App']['GetBudgetList']();
 }
 
 export function GetTagList() {
@@ -88,6 +100,10 @@ export function SubmitAccount(arg1, arg2) {
 
 export function UpdateAccount(arg1) {
   return window['go']['main']['App']['UpdateAccount'](arg1);
+}
+
+export function UpdateBudget(arg1) {
+  return window['go']['main']['App']['UpdateBudget'](arg1);
 }
 
 export function UpdateTag(arg1, arg2) {

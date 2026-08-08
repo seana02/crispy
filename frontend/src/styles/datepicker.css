@@ -16,7 +16,7 @@
 }
 
 [data-scope='date-picker'][data-part='input'] {
-  width: 80px;
+  width: 82px;
 }
 
 [data-scope='date-picker'][data-part='prev-trigger'],

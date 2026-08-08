@@ -52,7 +52,6 @@ select,
   padding: 0.5rem;
   font-size: 0.95rem;
   transition: border-color var(--transition-fast), background var(--transition-fast);
-  height: 100%;
 }
 
 .checkmark-visual {

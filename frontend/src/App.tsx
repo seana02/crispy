@@ -6,6 +6,8 @@ import Transactions from "src/pages/Transactions";
 import NewTransaction from "src/pages/NewTransaction";
 import EditTransaction from "src/pages/EditTransaction";
 import Budgets from "src/pages/Budgets";
+import NewBudget from "src/pages/NewBudget";
+import EditBudget from "src/pages/EditBudget";
 import Accounts from "src/pages/Accounts";
 import NewAccount from "src/pages/NewAccount";
 import Settings from "src/pages/Settings";
@@ -22,7 +24,11 @@ export default function App() {
                 <Route path="/add" component={NewTransaction} />
                 <Route path="/:id" component={EditTransaction} />
             </Route>
-            <Route path="/budgets" component={Budgets} />
+            <Route path="/budgets">
+                <Route path="/" component={Budgets} />
+                <Route path="/add" component={NewBudget} />
+                <Route path="/:id" component={EditBudget} />
+            </Route>
             <Route path="/accounts">
                 <Route path="/" component={Accounts} />
                 <Route path="/add" component={NewAccount} />
