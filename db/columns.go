@@ -20,6 +20,13 @@ const (
 	Column_AccountId
 	Column_Amount
 	Column_TagId
+	Column_Frequency
+	Column_Interval
+	Column_DayOfWeek
+	Column_DayOfMonth
+	Column_StartDate
+	Column_EndDate
+	Column_Target
 )
 
 func (c Column) String() string {
@@ -58,6 +65,20 @@ func (c Column) String() string {
 		return "amount"
 	case Column_TagId:
 		return "tag_id"
+	case Column_Frequency:
+		return "frequency"
+	case Column_Interval:
+		return "interval"
+	case Column_DayOfWeek:
+		return "day_of_week"
+	case Column_DayOfMonth:
+		return "day_of_month"
+	case Column_StartDate:
+		return "start_date"
+	case Column_EndDate:
+		return "end_date"
+	case Column_Target:
+		return "target"
 	}
 	return ""
 }

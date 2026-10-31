@@ -63,6 +63,8 @@ const (
 	Table_Posting
 	Table_Tag
 	Table_TransactionTags
+	Table_Recurrence
+	Table_Budget
 )
 
 func (t Table) String() string {
@@ -77,6 +79,10 @@ func (t Table) String() string {
 		return "\"Tag\""
 	case Table_TransactionTags:
 		return "\"Transaction_Tags\""
+	case Table_Recurrence:
+		return "\"Recurrence\""
+	case Table_Budget:
+		return "\"Budget\""
 	}
 	return ""
 }

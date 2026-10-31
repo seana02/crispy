@@ -1,24 +1,9 @@
 import { createEffect, createResource } from "solid-js";
 import { createStore, reconcile } from "solid-js/store";
 import { CreateBudget, DeleteBudget, GetBudgetList, UpdateBudget } from "wailsjs/go/main/App";
+import { domain } from "wailsjs/go/models";
 
-export interface BudgetDTO {
-    id: number;
-    name: string;
-    description: string;
-    target: string;
-    tagId: number;
-    tagName: string;
-    frequency: string;
-    interval: number;
-    dayOfWeek: number;
-    dayOfMonth: number;
-    startDate: string;
-    currentSpend: string;
-    nextReset: string;
-}
-
-const [budgetList, setBudgetList] = createStore<BudgetDTO[]>([]);
+const [budgetList, setBudgetList] = createStore<domain.BudgetDTO[]>([]);
 
 const [dataResource, { refetch }] = createResource(async () => {
     return await GetBudgetList();
@@ -39,7 +24,7 @@ const submitNewBudget = async (
     dayOfMonth: number,
     startDate: string,
 ) => {
-    const dto: BudgetDTO = {
+    const dto: domain.BudgetDTO = {
         id: 0,
         name,
         description,
@@ -71,7 +56,7 @@ const submitEditBudget = async (
     startDate: string,
 ) => {
     try {
-        const dto: BudgetDTO = {
+        const dto: domain.BudgetDTO = {
             id,
             name,
             description,

@@ -276,48 +276,48 @@ func (a *App) RemoveTagFromTransaction(transactionId int64, tagId int64) error {
 // =============================================================== //
 
 func (a *App) GetBudgetList() ([]*domain.BudgetDTO, error) {
-	// budgets, err := a.deps.Service.GetAllBudgets(a.ctx)
-	// if err != nil {
-	// 	a.deps.Logger.Error("Error getting budget list", "Error", err)
-	// 	return nil, err
-	// }
-	// var output []*domain.BudgetDTO
-	// for _, b := range budgets {
-	// 	output = append(output, b.ToDTO())
-	// }
-	fmt.Println("GetBudgetList called")
+	budgets, err := a.deps.Service.GetAllBudgets(a.ctx)
+	if err != nil {
+		a.deps.Logger.Error("Error getting budget list", "Error", err)
+		return nil, err
+	}
+	var output []*domain.BudgetDTO
+	for _, b := range budgets {
+		output = append(output, b.ToDTO())
+	}
 	return nil, nil
 }
 
 func (a *App) CreateBudget(b *domain.BudgetDTO) error {
-	// if err := a.submitBudget(a.deps.Service.CreateBudget, b); err != nil {
-	// 	a.deps.Logger.Error("Error creating budget", "Error", err)
-	// 	return err
-	// }
-	fmt.Println("CreateBudget called with:", b)
+	if err := a.submitBudget(a.deps.Service.CreateBudget, b); err != nil {
+		a.deps.Logger.Error("Error creating budget", "Error", err)
+		return err
+	}
 	return nil
 }
 
 func (a *App) UpdateBudget(b *domain.BudgetDTO) error {
-	// if err := a.submitBudget(a.deps.Service.UpdateBudget, b); err != nil {
-	// 	a.deps.Logger.Error("Error updating budget", "Error", err)
-	// 	return err
-	// }
-	fmt.Println("UpdateBudget called with:", b)
+	if err := a.submitBudget(a.deps.Service.UpdateBudget, b); err != nil {
+		a.deps.Logger.Error("Error updating budget", "Error", err)
+		return err
+	}
 	return nil
 }
 
-func (a *App) submitBudet(fn func(ctx context.Context, b *domain.Budget, r *domain.RecurrenceInput) error, b *domain.BudgetDTO) error {
-	fmt.Println("submitbudget")
+func (a *App) submitBudget(fn func(ctx context.Context, b *domain.Budget) error, b *domain.BudgetDTO) error {
+	budget, err := b.ToDomain()
+	if err != nil {
+		return err
+	}
+	err = fn(a.ctx, budget)
 	return nil
 }
 
 func (a *App) DeleteBudget(id int64) error {
-	// if err := a.deps.Service.DeleteBudget(a.ctx, id); err != nil {
-	// 	a.deps.Logger.Error("Error deleting budget", "id", id, "Error", err)
-	// 	return err
-	// }
-	fmt.Println("DeleteBudget called with id:", id)
+	if err := a.deps.Service.DeleteBudget(a.ctx, id); err != nil {
+		a.deps.Logger.Error("Error deleting budget", "id", id, "Error", err)
+		return err
+	}
 	return nil
 }
 

@@ -39,7 +39,20 @@ CREATE INDEX IF NOT EXISTS idx_posting_accountid ON Posting(account_id);
 CREATE TABLE IF NOT EXISTS RecurringTransaction (
     id INTEGER PRIMARY KEY,
     description TEXT,
-    recurrence_id INTEGER NOT NULL REFERENCES Recurrence(id),
+    frequency TEXT NOT NULL CHECK ( frequency IN ('Daily', 'Weekly', 'Monthly') ),
+    interval INTEGER NOT NULL,
+    day_of_week INTEGER,
+    day_of_month INTEGER,
+    start_date DATETIME,
+    end_date DATETIME,
+    CHECK (
+        (frequency = 'Weekly' AND day_of_week BETWEEN 0 AND 6)
+        OR (frequency <> 'Weekly' AND day_of_week IS NULL)
+    ),
+    CHECK (
+        (frequency = 'Monthly' AND day_of_month BETWEEN 1 AND 31)
+        OR (frequency <> 'Monthly' AND day_of_month IS NULL)
+    )
     last_run TEXT NOT NULL DEFAULT '1970-1-1',
     active BOOLEAN NOT NULL,
     status TEXT NOT NULL CHECK( status IN ('Pending', 'Posted', 'Cleared') ),
@@ -56,14 +69,16 @@ CREATE TABLE IF NOT EXISTS RecurringPosting (
     date_created DATETIME
 );
 
-CREATE TABLE IF NOT EXISTS Recurrence (
+CREATE TABLE IF NOT EXISTS Budget (
     id INTEGER PRIMARY KEY,
+    name TEXT,
+    description TEXT,
+    target TEXT,
+    tag_id INTEGER NOT NULL REFERENCES Tag(id),
     frequency TEXT NOT NULL CHECK ( frequency IN ('Daily', 'Weekly', 'Monthly') ),
     interval INTEGER NOT NULL,
     day_of_week INTEGER,
     day_of_month INTEGER,
-    start_date DATETIME,
-    end_date DATETIME,
     CHECK (
         (frequency = 'Weekly' AND day_of_week BETWEEN 0 AND 6)
         OR (frequency <> 'Weekly' AND day_of_week IS NULL)
@@ -72,15 +87,6 @@ CREATE TABLE IF NOT EXISTS Recurrence (
         (frequency = 'Monthly' AND day_of_month BETWEEN 1 AND 31)
         OR (frequency <> 'Monthly' AND day_of_month IS NULL)
     )
-);
-
-CREATE TABLE IF NOT EXISTS Budget (
-    id INTEGER PRIMARY KEY,
-    name TEXT,
-    description TEXT,
-    target TEXT,
-    tag INTEGER NOT NULL REFERENCES Tag(id),
-    reset_frequency INTEGER NOT NULL REFERENCES Recurrence(id)
 );
 
 CREATE TABLE IF NOT EXISTS Rule (

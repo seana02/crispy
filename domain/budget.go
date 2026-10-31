@@ -1,49 +1,67 @@
 package domain
 
 import (
+	"errors"
 	"time"
+
+	"github.com/shopspring/decimal"
+)
+
+type Frequency string
+
+const (
+	FreqDaily   Frequency = "Daily"
+	FreqWeekly  Frequency = "Weekly"
+	FreqMonthly Frequency = "Monthly"
 )
 
 type Budget struct {
 	id          int64
 	name        string
 	description string
-	target      string
+	target      decimal.Decimal
 	tagId       int64
-	recurrenceId int64
+	frequency   Frequency
+	interval    int
+	dayOfWeek   *time.Weekday
+	dayOfMonth  int
 }
 
 type BudgetDTO struct {
-	Id           int64  `json:"id"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	Target       string `json:"target"`
-	TagId        int64  `json:"tagId"`
-	TagName      string `json:"tagName"`
-	Frequency    string `json:"frequency"`
-	Interval     int    `json:"interval"`
-	DayOfWeek    int    `json:"dayOfWeek"`
-	DayOfMonth   int    `json:"dayOfMonth"`
-	StartDate    string `json:"startDate"`
-	CurrentSpend string `json:"currentSpend"`
-	NextReset    string `json:"nextReset"`
+	Id           int64           `json:"id"`
+	Name         string          `json:"name"`
+	Description  string          `json:"description"`
+	Target       decimal.Decimal `json:"target"`
+	TagId        int64           `json:"tagId"`
+	Frequency    Frequency       `json:"frequency"`
+	Interval     int             `json:"interval"`
+	DayOfWeek    *time.Weekday   `json:"dayOfWeek"`
+	DayOfMonth   int             `json:"dayOfMonth"`
+	CurrentSpend string          `json:"currentSpend"`
+	NextReset    string          `json:"nextReset"`
 }
 
 func NewBudget(
 	id int64,
 	name string,
 	description string,
-	target string,
+	target decimal.Decimal,
 	tagId int64,
-	recurrenceId int64,
+	frequency Frequency,
+	interval int,
+	dayOfWeek *time.Weekday,
+	dayOfMonth int,
 ) *Budget {
 	return &Budget{
-		id:           id,
-		name:         name,
-		description:  description,
-		target:       target,
-		tagId:        tagId,
-		recurrenceId: recurrenceId,
+		id:          id,
+		name:        name,
+		description: description,
+		target:      target,
+		tagId:       tagId,
+		frequency:   frequency,
+		interval:    interval,
+		dayOfWeek:   dayOfWeek,
+		dayOfMonth:  dayOfMonth,
 	}
 }
 
@@ -54,6 +72,10 @@ func (b *Budget) ToDTO() *BudgetDTO {
 		Description: b.description,
 		Target:      b.target,
 		TagId:       b.tagId,
+		Frequency:   b.frequency,
+		Interval:    b.interval,
+		DayOfWeek:   b.dayOfWeek,
+		DayOfMonth:  b.dayOfMonth,
 	}
 }
 
@@ -64,37 +86,29 @@ func (b *BudgetDTO) ToDomain() (*Budget, error) {
 		b.Description,
 		b.Target,
 		b.TagId,
-		0, // recurrenceId resolved by service layer
+		b.Frequency,
+		b.Interval,
+		b.DayOfWeek,
+		b.DayOfMonth,
 	), nil
 }
 
-func (b *Budget) ID() int64           { return b.id }
-func (b *Budget) Name() string        { return b.name }
-func (b *Budget) Description() string { return b.description }
-func (b *Budget) Target() string      { return b.target }
-func (b *Budget) TagId() int64        { return b.tagId }
-func (b *Budget) RecurrenceId() int64 { return b.recurrenceId }
+func (b *Budget) ID() int64                { return b.id }
+func (b *Budget) Name() string             { return b.name }
+func (b *Budget) Description() string      { return b.description }
+func (b *Budget) Target() decimal.Decimal  { return b.target }
+func (b *Budget) TagId() int64             { return b.tagId }
+func (b *Budget) Frequency() Frequency     { return b.frequency }
+func (b *Budget) Interval() int            { return b.interval }
+func (b *Budget) DayOfWeek() *time.Weekday { return b.dayOfWeek }
+func (b *Budget) DayOfMonth() int          { return b.dayOfMonth }
 
-// RecurrenceInput carries the recurrence fields from the frontend DTO
-// so the service layer can upsert the Recurrence row independently.
-type RecurrenceInput struct {
-	Frequency  string
-	Interval   int
-	DayOfWeek  time.Weekday
-	DayOfMonth int
-	StartDate  time.Time
-}
-
-func (b *BudgetDTO) ToRecurrenceInput() (*RecurrenceInput, error) {
-	startDate, err := time.Parse("2006-01-02", b.StartDate)
-	if err != nil {
-		return nil, err
+func (b *Budget) Validate() error {
+	if b.frequency == FreqWeekly && b.dayOfWeek == nil {
+		return errors.New("Weekly frequency requires a day of week")
 	}
-	return &RecurrenceInput{
-		Frequency:  b.Frequency,
-		Interval:   b.Interval,
-		DayOfWeek:  time.Weekday(b.DayOfWeek),
-		DayOfMonth: b.DayOfMonth,
-		StartDate:  startDate,
-	}, nil
+	if b.frequency == FreqMonthly && (b.dayOfMonth < 0 || b.dayOfMonth > 31) {
+		return errors.New("Monthly frequency requires a day of month")
+	}
+	return nil
 }

@@ -155,7 +155,12 @@ Indexes Postings(transaction_id), Postings(account_id) for fast reports
 |:--|:--|:--|
 |id|INTEGER PK|unique posting ID|
 |description|TEXT|memo|
-|recurrence_id|INTEGER FK|id of recurrence|
+|frequency|TEXT NOT NULL|must be in 'daily', 'weekly', or 'monthly'|
+|interval|INTEGER NOT NULL|x in "every x days/weeks/months"|
+|day_of_week|INTEGER|must be 0-6 if 'weekly', or NULL|
+|day_of_month|INTEGER|must be 1-31 if 'monthly', or NULL|
+|start_date|TEXT|first date that is triggered|
+|end_date|TEXT|last possible date to trigger|
 |last_run|TEXT|last time this template was executed, default: '1970-1-1'|
 |active|BOOLEAN|enable/disable template|
 |status|TEXT|ENUM: pending, posted, cleared, status to create as|
@@ -192,7 +197,12 @@ when generating a transaction, evaluate amount_expression to compute actual post
 |description|TEXT|description or additional notes|
 |target|TEXT|the target amount for budget|
 |tag|INTEGER FK|associated tag for expense tracking|
-|reset_frequency|INTEGER FK|id of recurrence for when the budget is reset|
+|frequency|TEXT NOT NULL|must be in 'daily', 'weekly', or 'monthly'|
+|interval|INTEGER NOT NULL|x in "every x days/weeks/months"|
+|day_of_week|INTEGER|must be 0-6 if 'weekly', or NULL|
+|day_of_month|INTEGER|must be 1-31 if 'monthly', or NULL|
+|start_date|TEXT|first date that is triggered|
+|end_date|TEXT|last possible date to trigger|
 
 ## Rule
 rules for auto-tagging, posting adjustments, or cashback calculations
@@ -287,7 +297,12 @@ Posting (id PK)
 
 RecurringTransaction (id PK)
 ├─ description
-├─ recurrence_id → Recurrence.id
+├─ frequency (Daily, Weekly, Monthly)
+├─ interval
+├─ day_of_week (0-6)
+├─ day_of_month (1-31)
+├─ start_date
+├─ end_date
 ├─ last_run
 ├─ base_amount
 ├─ active
@@ -304,24 +319,17 @@ RecurringPosting (id PK)
 ├─ currency
 └─ created_at
 
-Recurrence (id PK)
+Budget (id PK)
+├─ name
+├─ description
+├─ target
+├─ tag → Tag.id
 ├─ frequency (Daily, Weekly, Monthly)
 ├─ interval
 ├─ day_of_week (0-6)
 ├─ day_of_month (1-31)
 ├─ start_date
 ├─ end_date
-├─ account_id → Account.id
-├─ amount_expression
-├─ currency
-└─ created_at
-
-Budget (id PK)
-├─ name
-├─ description
-├─ target
-├─ tag → Tag.id
-├─ reset_frequency → Recurrence.id
 
 Rule (id PK)
 ├─ name
