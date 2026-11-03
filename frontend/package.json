@@ -1,26 +1,31 @@
 {
-  "name": "crispy-go",
-  "version": "0.0.0",
-  "description": "",
+  "name": "crispy-frontend",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
   "scripts": {
-    "start": "vite",
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
-  },
-  "license": "MIT",
-  "devDependencies": {
-    "typescript": "^4.8.2",
-    "vite": "^8.0.8",
-    "vite-plugin-solid": "^2.3.0"
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "@ark-ui/solid": "^5.36.2",
-    "@solid-primitives/scheduled": "^1.5.3",
-    "@solidjs/router": "^0.15.3",
-    "lucide-solid": "^0.553.0",
-    "solid-js": "^1.5.1",
-    "solid-primitives": "^0.0.1"
+    "@solidjs/router": "^0.15.4",
+    "big.js": "^6.2.2",
+    "chart.js": "^4.6.1",
+    "date-fns": "^4.1.0",
+    "lucide-solid": "^1.66.0",
+    "solid-js": "^1.9.18"
   },
-  "author": "seana02"
+  "devDependencies": {
+    "@solidjs/testing-library": "^0.8.10",
+    "@testing-library/jest-dom": "^6.6.3",
+    "@types/big.js": "^7.0.0",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.7.3",
+    "vite": "^6.3.5",
+    "vite-plugin-solid": "^2.11.6",
+    "vitest": "^5.0.5"
+  }
 }

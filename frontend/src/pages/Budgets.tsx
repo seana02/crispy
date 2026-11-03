@@ -1,144 +1,85 @@
-import { useNavigate } from "@solidjs/router";
-import { createMemo, createSignal, For } from "solid-js";
-import "src/styles/lists.css";
-import "src/styles/budgets.css";
-import { budgetList, deleteBudgetById } from "src/stores/budgetStore";
-import { PencilLine, Trash2 } from "lucide-solid";
-import ConfirmationPopup from "src/components/ConfirmationPopup";
+import { createMemo, createSignal, Show, For } from 'solid-js';
+import { useNavigate } from '@solidjs/router';
+import { createResource } from 'solid-js';
+import { getBudgets, deleteBudget } from '../api/budget';
+import { Budget } from '../api/types';
+import { Pagination } from '../components/lists/Pagination';
+import { ConfirmDialog } from '../components/layout/ConfirmDialog';
+import { formatCurrency } from '../state/decimal';
+import './Budgets.css';
 
 export default function Budgets() {
-    const navigate = useNavigate();
-    const [deleteConfirmation, setDeleteConfirmID] = createSignal(-1);
+  const navigate = useNavigate();
+  const [page, setPage] = createSignal(1);
+  const [perPage] = createSignal(10);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = createSignal(false);
+  const [budgetToDelete, setBudgetToDelete] = createSignal<string | null>(null);
 
-    const getDaysUntil = (nextReset: string) => {
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const resetDate = new Date(nextReset);
-        resetDate.setHours(0, 0, 0, 0);
-        const diffTime = resetDate.getTime() - today.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const [budgetsResource, { refetch }] = createResource(() =>
+    getBudgets({ page: page(), per_page: perPage() })
+  );
 
-        if (diffDays < 0) return "resets today";
-        if (diffDays === 0) return "resets today";
-        if (diffDays < 7) return `resets in ${diffDays}d`;
+  const budgets = createMemo(() => budgetsResource()?.data ?? []);
+  const meta = createMemo(() => budgetsResource()?.meta ?? { page: 1, per_page: 10, total: 0, totalPages: 0 });
 
-        const weeks = Math.floor(diffDays / 7);
-        if (weeks < 4) return `resets in ${weeks}w`;
+  const handleDelete = () => {
+    const id = budgetToDelete();
+    if (id) deleteBudget(id).then(() => { refetch(); setIsDeleteDialogOpen(false); setBudgetToDelete(null); });
+  };
 
-        const months = Math.floor(diffDays / 30);
-        return `resets in ${months}mo`;
-    };
+  return (
+    <div class="page">
+      <div class="page-header">
+        <h1>Budgets</h1>
+        <button class="btn btn-primary" onClick={() => navigate('/budgets/new')}>+ New Budget</button>
+      </div>
 
-    const getProgressColor = (currentSpend: string, target: string) => {
-        const current = parseFloat(currentSpend);
-        const targetNum = parseFloat(target);
-        const pct = (current / targetNum) * 100;
+      <Show when={!budgetsResource.loading} fallback={<p style="color: var(--color-text-secondary)">Loading...</p>}>
+        <Show when={budgets().length > 0} fallback={<p style="color: var(--color-text-secondary); text-align: center; padding: 40px">No budgets found</p>}>
+          <div class="budgets-grid">
+            <For each={budgets()}>
+              {(budget) => (
+                <div class="budget-card">
+                  <div class="budget-card-header">
+                    <h3>{budget.name}</h3>
+                  </div>
+                  <div class="budget-card-meta">
+                    <span class={`budget-direction-badge ${budget.direction}`}>{budget.direction}</span>
+                    <span style="font-size: 12px; color: var(--color-text-secondary)">{budget.period}</span>
+                  </div>
+                  <div class="budget-target">
+                    <span class="target-label">Target</span>
+                    <span class="target-value">{formatCurrency(budget.target_amount, budget.currency)}</span>
+                  </div>
+                  <div class="budget-card-actions">
+                    <button class="btn btn-secondary" onClick={() => navigate(`/budgets/${budget.id}`)}>View</button>
+                    <button class="btn btn-danger" onClick={() => { setBudgetToDelete(budget.id); setIsDeleteDialogOpen(true); }}>Delete</button>
+                  </div>
+                </div>
+              )}
+            </For>
+          </div>
 
-        if (pct > 100) return "var(--color-accent-error)";
-        if (pct > 80) return "var(--color-accent-warn)";
-        return "var(--color-primary)";
-    };
+          <Pagination
+            page={page()}
+            perPage={perPage()}
+            total={meta().total}
+            totalPages={meta().totalPages}
+            onPageChange={setPage}
+          />
+        </Show>
+      </Show>
 
-    const getProgressWidth = (currentSpend: string, target: string) => {
-        const current = parseFloat(currentSpend);
-        const targetNum = parseFloat(target);
-        const pct = (current / targetNum) * 100;
-        return `${Math.min(pct, 100)}%`;
-    };
-
-    return (
-        <div id="budgets-page">
-            <div class="filter-menu">
-                <button class="add-btn" onClick={() => navigate("/budgets/add")}>
-                    New Budget
-                </button>
-            </div>
-            <div class="list-box">
-                <For each={budgetList}>
-                    {(budget, i) => {
-                        const progressColor = getProgressColor(budget.currentSpend, budget.target);
-                        const progressWidth = getProgressWidth(budget.currentSpend, budget.target);
-
-                        return (
-                            <div class="budget-block">
-                                <div class="budget-header">
-                                    <div class="list-row-name">{budget.name}</div>
-                                    <div class="list-row-desc">{budget.description}</div>
-                                    <div class="list-middle-gap"></div>
-                                    <button
-                                        class="list-row-button list-row-edit"
-                                        onClick={() => navigate(`/budgets/${budget.id}`)}
-                                    >
-                                        <PencilLine class="svg-small" />
-                                    </button>
-                                    <button
-                                        class="list-row-button list-row-delete"
-                                        onClick={() => setDeleteConfirmID(i())}
-                                    >
-                                        <Trash2 class="svg-small" />
-                                    </button>
-                                    <ConfirmationPopup
-                                        isOpen={deleteConfirmation() == i()}
-                                        onClose={() => setDeleteConfirmID(-1)}
-                                    >
-                                        <div class="popup-text">
-                                            Are you sure you want to delete the following Budget?
-                                        </div>
-                                        <div style={{ height: "8px" }} />
-                                        <div class="popup-name">{budget.name}</div>
-                                        <div class="popup-description">{budget.description}</div>
-                                        <div style={{ height: "12px" }} />
-                                        <div class="popup-button-wrapper">
-                                            <button
-                                                class="popup-button popup-delete"
-                                                onClick={() => {
-                                                    deleteBudgetById(budget.id);
-                                                    setDeleteConfirmID(-1);
-                                                }}
-                                            >
-                                                Delete
-                                            </button>
-                                            <button
-                                                class="popup-button popup-cancel"
-                                                onClick={() => setDeleteConfirmID(-1)}
-                                            >
-                                                Cancel
-                                            </button>
-                                        </div>
-                                    </ConfirmationPopup>
-                                </div>
-                                <div class="budget-progress-row">
-                                    <div class="budget-progress-track">
-                                        <div
-                                            class="budget-progress-fill"
-                                            style={{
-                                                width: progressWidth,
-                                                backgroundColor: progressColor,
-                                            }}
-                                        />
-                                    </div>
-                                    <span>
-                                        {Math.min(
-                                            (parseFloat(budget.currentSpend) /
-                                                parseFloat(budget.target)) *
-                                                100,
-                                            100,
-                                        ).toFixed(0)}
-                                        %
-                                    </span>
-                                </div>
-                                <div class="budget-meta">
-                                    <span>
-                                        ${parseFloat(budget.currentSpend).toFixed(2)} / $
-                                        {parseFloat(budget.target).toFixed(2)}
-                                    </span>
-                                    <span>{getDaysUntil(budget.nextReset)}</span>
-                                </div>
-                            </div>
-                        );
-                    }}
-                </For>
-            </div>
-        </div>
-    );
+      <ConfirmDialog
+        isOpen={isDeleteDialogOpen()}
+        title="Delete Budget"
+        message="Are you sure you want to delete this budget? This action cannot be undone."
+        variant="danger"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={handleDelete}
+        onCancel={() => { setIsDeleteDialogOpen(false); setBudgetToDelete(null); }}
+      />
+    </div>
+  );
 }

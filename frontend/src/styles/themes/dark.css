@@ -1,0 +1,43 @@
+:root {
+  /* Backgrounds */
+  --color-bg-primary: #1a1a2e;
+  --color-bg-surface: #22223a;
+  --color-bg-elevated: #2a2a4a;
+  --color-border: #333366;
+
+  /* Text */
+  --color-text-primary: #e0e0f0;
+  --color-text-secondary: #8888aa;
+  --color-text-disabled: #555577;
+
+  /* Primary accent (blue) */
+  --color-primary: #4d8eff;
+  --color-primary-hover: #6aa3ff;
+  --color-primary-muted: #2a4a8a;
+
+  /* Neon accent palette */
+  --color-neon-green: #39ff85;
+  --color-neon-red: #ff3b5c;
+  --color-neon-cyan: #22d3ee;
+  --color-neon-yellow: #ffe03d;
+  --color-neon-magenta: #f472b6;
+  --color-neon-violet: #a78bfa;
+  --color-neon-blue: #3b82f6;
+  --color-neon-orange: #ff8c42;
+
+  /* Semantic colors */
+  --color-success: #39ff85;
+  --color-warning: #ffe03d;
+  --color-error: #ff3b5c;
+  --color-info: #4d8eff;
+
+  /* Typography */
+  --font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Visual */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 12px;
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.3);
+}

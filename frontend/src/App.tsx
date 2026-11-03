@@ -1,44 +1,67 @@
-import { Route, Router } from '@solidjs/router';
+import { Router, Route } from '@solidjs/router';
+import { Layout } from './components/layout/Layout';
+import Home from './pages/Home';
+import Accounts from './pages/Accounts';
+import AccountDetail from './pages/AccountDetail';
+import AccountFormPage from './pages/AccountFormPage';
+import Transactions from './pages/Transactions';
+import TransactionDetail from './pages/TransactionDetail';
+import TransactionFormPage from './pages/TransactionFormPage';
+import Budgets from './pages/Budgets';
+import BudgetDetail from './pages/BudgetDetail';
+import BudgetFormPage from './pages/BudgetFormPage';
+import BalanceSheet from './pages/BalanceSheet';
+import IncomeStatement from './pages/IncomeStatement';
+import Tags from './pages/Tags';
+import TagDetail from './pages/TagDetail';
+import RecurringTransactions from './pages/RecurringTransactions';
+import RecurringTransactionDetail from './pages/RecurringTransactionDetail';
+import ExchangeRates from './pages/ExchangeRates';
+import Settings from './pages/Settings';
 
-import PageLayout from "src/components/layouts/PageLayout";
-import Dashboard from "src/pages/Dashboard";
-import Transactions from "src/pages/Transactions";
-import NewTransaction from "src/pages/NewTransaction";
-import EditTransaction from "src/pages/EditTransaction";
-import Budgets from "src/pages/Budgets";
-import NewBudget from "src/pages/NewBudget";
-import EditBudget from "src/pages/EditBudget";
-import Accounts from "src/pages/Accounts";
-import NewAccount from "src/pages/NewAccount";
-import Settings from "src/pages/Settings";
-import EditAccount from 'src/pages/EditAccount';
-import Tags from 'src/pages/Tags';
-import EditTag from 'src/pages/EditTag';
+const App = () => {
+  return (
+    <Router root={Layout}>
+      <Route path="/" component={Home} />
 
-export default function App() {
-    return (
-        <Router root={PageLayout}>
-            <Route path="/" component={Dashboard} />
-            <Route path="/transactions">
-                <Route path="/" component={Transactions} />
-                <Route path="/add" component={NewTransaction} />
-                <Route path="/:id" component={EditTransaction} />
-            </Route>
-            <Route path="/budgets">
-                <Route path="/" component={Budgets} />
-                <Route path="/add" component={NewBudget} />
-                <Route path="/:id" component={EditBudget} />
-            </Route>
-            <Route path="/accounts">
-                <Route path="/" component={Accounts} />
-                <Route path="/add" component={NewAccount} />
-                <Route path="/:id" component={EditAccount} />
-            </Route>
-            <Route path="/tags">
-                <Route path="/" component={Tags} />
-                <Route path="/:id" component={EditTag} />
-            </Route>
-            <Route path="/settings" component={Settings} />
-        </Router>
-    );
+      {/* Accounts */}
+      <Route path="/accounts" component={Accounts} />
+      <Route path="/accounts/new" component={AccountFormPage} />
+      <Route path="/accounts/:id/edit" component={AccountFormPage} />
+      <Route path="/accounts/:id" component={AccountDetail} />
+
+      {/* Transactions */}
+      <Route path="/transactions" component={Transactions} />
+      <Route path="/transactions/new" component={TransactionFormPage} />
+      <Route path="/transactions/:id/edit" component={TransactionFormPage} />
+      <Route path="/transactions/:id" component={TransactionDetail} />
+
+      {/* Budgets */}
+      <Route path="/budgets" component={Budgets} />
+      <Route path="/budgets/new" component={BudgetFormPage} />
+      <Route path="/budgets/:id/edit" component={BudgetFormPage} />
+      <Route path="/budgets/:id" component={BudgetDetail} />
+
+      {/* Reports */}
+      <Route path="/reports/balance-sheet" component={BalanceSheet} />
+      <Route path="/reports/income-statement" component={IncomeStatement} />
+
+      {/* Tags */}
+      <Route path="/tags" component={Tags} />
+      <Route path="/tags/:key/:value" component={TagDetail} />
+
+      {/* Recurring */}
+      <Route path="/recurring" component={RecurringTransactions} />
+      <Route path="/recurring/new" component={RecurringTransactionDetail} />
+      <Route path="/recurring/:id" component={RecurringTransactionDetail} />
+
+      {/* Exchange Rates */}
+      <Route path="/exchange-rates" component={ExchangeRates} />
+
+      {/* Settings */}
+      <Route path="/settings" component={Settings} />
+    </Router>
+  );
 };
+
+export default App;

@@ -1,0 +1,4 @@
+getAccounts with a typeFilter only gets root-level accounts
+standardize error banners
+- src/pages/Accounts
+- StyledList

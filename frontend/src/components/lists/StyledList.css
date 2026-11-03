@@ -1,0 +1,118 @@
+.styled-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.styled-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.styled-list-search {
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+
+  & input {
+    width: 100%;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-family: var(--font-family);
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    transition: border-color 0.2s ease;
+
+    &:focus {
+      outline: none;
+      border-color: var(--color-primary);
+    }
+  }
+}
+
+.styled-list-filters {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.styled-list-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.styled-list-row {
+  display: flex;
+  background-color: var(--color-bg-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 16px;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+  align-items: center;
+  gap: 8px;
+
+  &:hover {
+    border-color: var(--color-primary-muted);
+    background-color: var(--color-bg-elevated);
+  }
+}
+
+.styled-list-row-content {
+  flex: 1;
+}
+
+.styled-list-row-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.styled-list-empty,
+.styled-list-loading {
+  padding: 48px;
+  text-align: center;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.btn-action {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: var(--font-family);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:hover {
+    opacity: 0.85;
+  }
+
+  &.btn-primary {
+    background-color: var(--color-primary);
+    color: var(--color-text-primary);
+    border-color: var(--color-primary);
+  }
+
+  &.btn-secondary {
+    background-color: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+  }
+
+  &.btn-danger {
+    background-color: transparent;
+    color: var(--color-error);
+    border-color: var(--color-error);
+  }
+}

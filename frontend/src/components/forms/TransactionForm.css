@@ -1,0 +1,163 @@
+.container {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.header {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.postingsSection {
+  .postingsHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+
+    .postingsTitle {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .balanceInfo {
+      font-size: 13px;
+      font-weight: 500;
+
+      .balanceOK {
+        color: var(--color-success);
+      }
+
+      .balanceError {
+        color: var(--color-error);
+      }
+    }
+  }
+}
+
+.postingsList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+
+  .postingRow {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr 80px 40px;
+    gap: 12px;
+    align-items: center;
+
+    @media (max-width: 992px) {
+      grid-template-columns: 1fr 1fr 1fr 1fr;
+    }
+
+    @media (max-width: 600px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .postingRow > .field:last-child {
+    display: flex;
+    justify-content: flex-end;
+  }
+}
+
+.postingRow {
+  .removeButton {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    background-color: var(--color-bg-elevated);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    color: var(--color-text-secondary);
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background-color: var(--color-error);
+      color: var(--color-text-primary);
+      border-color: var(--color-error);
+    }
+  }
+}
+
+.drButton {
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-family);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  min-width: 80px;
+
+  &.drActive {
+    background-color: var(--color-neon-green);
+    color: #000;
+    border-color: var(--color-neon-green);
+  }
+
+  &.drInactive {
+    background-color: var(--color-neon-red);
+    color: #000;
+    border-color: var(--color-neon-red);
+  }
+
+  &:hover {
+    opacity: 0.9;
+  }
+}
+
+.addPosting {
+  margin-top: 16px;
+
+  .addPostingButton {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    font-weight: 500;
+    font-family: var(--font-family);
+    background-color: var(--color-bg-elevated);
+    color: var(--color-text-primary);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+
+    &:hover {
+      background-color: var(--color-bg-surface);
+      border-color: var(--color-text-secondary);
+    }
+
+    &:active {
+      background-color: var(--color-primary-muted);
+    }
+  }
+}

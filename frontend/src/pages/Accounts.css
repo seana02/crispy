@@ -1,0 +1,36 @@
+.accounts-filter-select {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  transition: border-color 0.2s ease;
+
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+  }
+}
+
+.account-row {
+  display: flex;
+  gap: 4px;
+}
+
+.account-parent-path {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+.account-short-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--color-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}

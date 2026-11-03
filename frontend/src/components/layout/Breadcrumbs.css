@@ -1,0 +1,37 @@
+.root {
+  padding: 12px 0;
+}
+
+.list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.crumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-secondary);
+}
+
+.crum {
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--color-primary);
+  }
+}
+
+.activeCrum {
+  color: var(--color-text-primary);
+  font-weight: 600;
+}
+
+.separator {
+  color: var(--color-text-secondary);
+  font-size: 12px;
+}

@@ -1,0 +1,11 @@
+version: "2"
+sql:
+  - engine: "sqlite"
+    queries: "internal/dal/queries"
+    schema: "internal/dal/migrations"
+    gen:
+      go:
+        package: "generated"
+        out: "internal/dal/generated"
+        emit_json_tags: true
+        emit_empty_slices: true

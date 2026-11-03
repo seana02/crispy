@@ -1,0 +1,62 @@
+.budgets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+}
+
+.budget-card {
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.budget-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+
+  & h3 {
+    margin: 0;
+    font-size: 16px;
+    color: var(--color-text-primary);
+  }
+}
+
+.budget-card-meta {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.budget-direction-badge {
+  padding: 2px 8px;
+  border-radius: var(--radius-lg);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+
+  &.spending { background-color: color-mix(in srgb, var(--color-neon-yellow) 15%, transparent); color: var(--color-neon-yellow); }
+  &.saving   { background-color: color-mix(in srgb, var(--color-neon-green) 15%, transparent); color: var(--color-neon-green); }
+}
+
+.budget-target {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  & .target-label { font-size: 12px; color: var(--color-text-secondary); }
+  & .target-value { font-family: var(--font-family-mono); font-size: 16px; color: var(--color-text-primary); }
+}
+
+.budget-card-actions {
+  display: flex;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--color-border);
+}

@@ -1,0 +1,37 @@
+.select-root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  &.disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.select-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.select-input {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 14px;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+
+  &:focus { outline: none; border-color: var(--color-primary); }
+  &:disabled { cursor: not-allowed; }
+
+  .select-error & { border-color: var(--color-error); }
+}
+
+.select-error-msg {
+  font-size: 11px;
+  color: var(--color-error);
+  margin-top: 2px;
+}

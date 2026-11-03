@@ -1,9 +1,6 @@
-/* @refresh reload */
 import { render } from 'solid-js/web';
-import App from 'src/App';
-import "src/styles/theme.css";
-import "src/styles/layout.css";
-import "src/styles/globals.css";
-import "src/styles/ark.css";
+import App from './App';
+import './styles/global.css';
+import './styles/themes/dark.css';
 
-render(() => <App />, document.getElementById('root') as HTMLElement);
+render(() => <App />, document.getElementById('root')!);

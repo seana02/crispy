@@ -1,0 +1,117 @@
+.tag-input-root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  position: relative;
+
+  &.disabled { opacity: 0.6; cursor: not-allowed; }
+}
+
+.tag-input-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.tag-input-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 6px 10px;
+  min-height: 40px;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: text;
+  align-items: center;
+  transition: border-color 0.2s ease;
+
+  &:focus-within { border-color: var(--color-primary); }
+}
+
+.tag-chip-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  background-color: color-mix(in srgb, var(--color-neon-violet) 15%, transparent);
+  color: var(--color-neon-violet);
+  border-radius: var(--radius-lg);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.tag-chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  padding: 0;
+  font-size: 10px;
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  opacity: 0.7;
+  border-radius: 50%;
+
+  &:hover { opacity: 1; background-color: rgba(255,255,255,0.2); }
+}
+
+.tag-input-field {
+  flex: 1;
+  min-width: 120px;
+  padding: 2px 4px;
+  font-size: 13px;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background: none;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  height: auto;
+
+  &::placeholder { color: var(--color-text-disabled); }
+}
+
+.tag-autocomplete {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  margin-top: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  background-color: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  z-index: 100;
+  box-shadow: var(--shadow-card);
+}
+
+.tag-autocomplete-item {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-family: var(--font-family);
+  color: var(--color-text-primary);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover { background-color: var(--color-bg-surface); }
+}
+
+.tag-input-hint {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+.tag-input-error-msg {
+  font-size: 11px;
+  color: var(--color-error);
+  margin-top: 2px;
+}

@@ -1,0 +1,19 @@
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+.chart-canvas {
+  width: 100% !important;
+}
+
+.chart-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+}

@@ -1,0 +1,247 @@
+@import './themes/dark.css';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100vh;
+  width: 100vw;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+::selection {
+  background-color: var(--color-primary-muted);
+  color: var(--color-text-primary);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+  height: auto;
+}
+
+button {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.4rem 0.75rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  vertical-align: middle;
+}
+
+input {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none;
+  border-radius: var(--radius-sm);
+  height: 100%;
+  padding: 0.4rem 0.75rem;
+}
+
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background-color: var(--color-bg-elevated);
+  cursor: pointer;
+  position: relative;
+  flex-shrink: 0;
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+input[type="checkbox"]:checked::after {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 5px;
+  height: 9px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* ── Shared utility button classes ── */
+.btn {
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-family);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:not(:disabled):hover {
+    opacity: 0.85;
+  }
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.btn-secondary {
+  background-color: var(--color-bg-elevated);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-danger {
+  background-color: transparent;
+  color: var(--color-error);
+  border: 1px solid var(--color-error);
+}
+
+/* ── Page scaffold ── */
+.page {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+
+  & h1 {
+    font-size: 24px;
+    color: var(--color-text-primary);
+    margin: 0;
+  }
+}
+
+/* ── Shared card ── */
+.card {
+  background-color: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-card);
+}
+
+/* ── Account type badge ── */
+.type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-lg);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+
+  &.asset {
+    background-color: color-mix(in srgb, var(--color-neon-green) 15%, transparent);
+    color: var(--color-neon-green);
+  }
+
+  &.liability {
+    background-color: color-mix(in srgb, var(--color-neon-red) 15%, transparent);
+    color: var(--color-neon-red);
+  }
+
+  &.revenue {
+    background-color: color-mix(in srgb, var(--color-neon-cyan) 15%, transparent);
+    color: var(--color-neon-cyan);
+  }
+
+  &.expense {
+    background-color: color-mix(in srgb, var(--color-neon-yellow) 15%, transparent);
+    color: var(--color-neon-yellow);
+  }
+
+  &.equity {
+    background-color: color-mix(in srgb, var(--color-neon-magenta) 15%, transparent);
+    color: var(--color-neon-magenta);
+  }
+}
+
+/* ── Status badge ── */
+.status-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-neon-yellow);
+  padding: 2px 6px;
+  border: 1px solid color-mix(in srgb, var(--color-neon-yellow) 40%, transparent);
+  border-radius: var(--radius-sm);
+
+  &.pending {
+    color: var(--color-neon-yellow);
+    border-color: color-mix(in srgb, var(--color-neon-yellow) 40%, transparent);
+  }
+
+  &.posted {
+    color: var(--color-text-secondary);
+    border-color: var(--color-border);
+  }
+}
+
+/* ── Tag chip ── */
+.tag-chip {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-lg);
+  font-size: 11px;
+  background-color: color-mix(in srgb, var(--color-neon-violet) 15%, transparent);
+  color: var(--color-neon-violet);
+  cursor: pointer;
+  text-decoration: none;
+
+  &:hover {
+    opacity: 0.8;
+  }
+}
+
+/* ── Monospace amounts ── */
+.amount {
+  font-family: var(--font-family-mono);
+}
+
+.amount-positive {
+  color: var(--color-neon-green);
+}
+
+.amount-negative {
+  color: var(--color-neon-red);
+}
